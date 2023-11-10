@@ -755,7 +755,7 @@ namespace DBviewer
             dgvTable.DataSource = generalTable;
         }
 
-        // Пометка оплаты
+        // Пометка оплаты 
         private void btnPaid_Click(object sender, EventArgs e)
         {
             if (reportsTable.Rows.Count == 0)
