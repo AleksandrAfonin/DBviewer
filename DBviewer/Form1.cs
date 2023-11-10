@@ -1,15 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Data.SQLite;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
-
+//это комменатрий от меня
 namespace DBviewer
 {
     public partial class Form1 : Form
@@ -171,11 +163,12 @@ namespace DBviewer
                             " TotalHours INTEGER, Date TEXT(10), IaGakGek TEXT(100), PaymentMark TEXT(20))", connection);
                     CMD.ExecuteNonQuery();
                 }
-            }catch(SQLiteException)
+            }
+            catch (SQLiteException)
             {
                 MessageBox.Show("Не удалось подключиться к БД");
                 Application.Exit();
-            }         
+            }
         }
 
         // Загрузка таблицы Reports
@@ -558,7 +551,7 @@ namespace DBviewer
                 default: return "";
             }
         }
-        
+
         // Получение строкового значения с ведущим 0
         private string GetStringWith0(int value)
         {
@@ -566,7 +559,7 @@ namespace DBviewer
             if (str.Length < 2) str = "0" + str;
             return str;
         }
-        
+
         // Заполнение элементов Combo Box Discipline
         private void SetDiscCBDiscipline()
         {
@@ -639,7 +632,7 @@ namespace DBviewer
                     cbTypeOfActivity.Items.Clear();
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT DisName, GroupName" +
-                                            " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" + 
+                                            " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" +
                                             cbStudiesGroup.Text + "' AND IdLector = (SELECT Id FROM Teachers WHERE FIO = '" +
                                             cbTeacher.Text + "')", connection);
                     adapter = new SQLiteDataAdapter(CMD);
@@ -848,7 +841,7 @@ namespace DBviewer
             }
 
             if (cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1 || cbTypeOfActivity.SelectedIndex == -1
-                || cbDay.SelectedIndex == -1 || cbTeacher.SelectedIndex == -1 )
+                || cbDay.SelectedIndex == -1 || cbTeacher.SelectedIndex == -1)
             {
                 MessageBox.Show("Не все данные заполнены !");
                 return;
