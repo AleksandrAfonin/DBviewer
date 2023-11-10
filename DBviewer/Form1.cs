@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 
-//это комменатрий от меня
 namespace DBviewer
 {
     public partial class Form1 : Form
