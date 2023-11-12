@@ -58,6 +58,10 @@ namespace DBviewer
             this.lbHours = new System.Windows.Forms.Label();
             this.btnBackReports = new System.Windows.Forms.Button();
             this.btnEnter = new System.Windows.Forms.Button();
+            this.btnViewAll = new System.Windows.Forms.Button();
+            this.btnAdditionalInfo = new System.Windows.Forms.Button();
+            this.btnSaveAdditionalInfo = new System.Windows.Forms.Button();
+            this.btnBackAdditionalInfo = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTable)).BeginInit();
             this.SuspendLayout();
             // 
@@ -157,7 +161,7 @@ namespace DBviewer
             // 
             this.btnIntel.Location = new System.Drawing.Point(12, 12);
             this.btnIntel.Name = "btnIntel";
-            this.btnIntel.Size = new System.Drawing.Size(205, 23);
+            this.btnIntel.Size = new System.Drawing.Size(139, 23);
             this.btnIntel.TabIndex = 9;
             this.btnIntel.Text = "Сведения о проведенных занятиях";
             this.btnIntel.UseVisualStyleBackColor = true;
@@ -249,7 +253,7 @@ namespace DBviewer
             // 
             this.btnBackGeneral.Location = new System.Drawing.Point(12, 36);
             this.btnBackGeneral.Name = "btnBackGeneral";
-            this.btnBackGeneral.Size = new System.Drawing.Size(205, 23);
+            this.btnBackGeneral.Size = new System.Drawing.Size(139, 23);
             this.btnBackGeneral.TabIndex = 16;
             this.btnBackGeneral.Text = "Назад";
             this.btnBackGeneral.UseVisualStyleBackColor = true;
@@ -269,9 +273,9 @@ namespace DBviewer
             // 
             // btnInput
             // 
-            this.btnInput.Location = new System.Drawing.Point(223, 12);
+            this.btnInput.Location = new System.Drawing.Point(157, 12);
             this.btnInput.Name = "btnInput";
-            this.btnInput.Size = new System.Drawing.Size(271, 23);
+            this.btnInput.Size = new System.Drawing.Size(128, 23);
             this.btnInput.TabIndex = 18;
             this.btnInput.Text = "Ввод сведений о проведенных учебных занятиях";
             this.btnInput.UseVisualStyleBackColor = true;
@@ -358,7 +362,7 @@ namespace DBviewer
             // 
             // btnBackReports
             // 
-            this.btnBackReports.Location = new System.Drawing.Point(223, 36);
+            this.btnBackReports.Location = new System.Drawing.Point(157, 36);
             this.btnBackReports.Name = "btnBackReports";
             this.btnBackReports.Size = new System.Drawing.Size(128, 23);
             this.btnBackReports.TabIndex = 27;
@@ -369,7 +373,7 @@ namespace DBviewer
             // 
             // btnEnter
             // 
-            this.btnEnter.Location = new System.Drawing.Point(521, 86);
+            this.btnEnter.Location = new System.Drawing.Point(596, 85);
             this.btnEnter.Name = "btnEnter";
             this.btnEnter.Size = new System.Drawing.Size(75, 23);
             this.btnEnter.TabIndex = 28;
@@ -378,11 +382,58 @@ namespace DBviewer
             this.btnEnter.Visible = false;
             this.btnEnter.Click += new System.EventHandler(this.btnEnter_Click);
             // 
+            // btnViewAll
+            // 
+            this.btnViewAll.Location = new System.Drawing.Point(507, 85);
+            this.btnViewAll.Name = "btnViewAll";
+            this.btnViewAll.Size = new System.Drawing.Size(75, 23);
+            this.btnViewAll.TabIndex = 29;
+            this.btnViewAll.Text = "Показать всех";
+            this.btnViewAll.UseVisualStyleBackColor = true;
+            this.btnViewAll.Visible = false;
+            this.btnViewAll.Click += new System.EventHandler(this.btnViewAll_Click);
+            // 
+            // btnAdditionalInfo
+            // 
+            this.btnAdditionalInfo.Location = new System.Drawing.Point(291, 12);
+            this.btnAdditionalInfo.Name = "btnAdditionalInfo";
+            this.btnAdditionalInfo.Size = new System.Drawing.Size(107, 23);
+            this.btnAdditionalInfo.TabIndex = 30;
+            this.btnAdditionalInfo.Text = "Доп инфа";
+            this.btnAdditionalInfo.UseVisualStyleBackColor = true;
+            this.btnAdditionalInfo.Click += new System.EventHandler(this.btnAdditionalInfo_Click);
+            // 
+            // btnSaveAdditionalInfo
+            // 
+            this.btnSaveAdditionalInfo.Location = new System.Drawing.Point(405, 13);
+            this.btnSaveAdditionalInfo.Name = "btnSaveAdditionalInfo";
+            this.btnSaveAdditionalInfo.Size = new System.Drawing.Size(75, 23);
+            this.btnSaveAdditionalInfo.TabIndex = 31;
+            this.btnSaveAdditionalInfo.Text = "Сохранить";
+            this.btnSaveAdditionalInfo.UseVisualStyleBackColor = true;
+            this.btnSaveAdditionalInfo.Visible = false;
+            this.btnSaveAdditionalInfo.Click += new System.EventHandler(this.btnSaveAdditionalInfo_Click);
+            // 
+            // btnBackAdditionalInfo
+            // 
+            this.btnBackAdditionalInfo.Location = new System.Drawing.Point(487, 13);
+            this.btnBackAdditionalInfo.Name = "btnBackAdditionalInfo";
+            this.btnBackAdditionalInfo.Size = new System.Drawing.Size(75, 23);
+            this.btnBackAdditionalInfo.TabIndex = 32;
+            this.btnBackAdditionalInfo.Text = "Назад";
+            this.btnBackAdditionalInfo.UseVisualStyleBackColor = true;
+            this.btnBackAdditionalInfo.Visible = false;
+            this.btnBackAdditionalInfo.Click += new System.EventHandler(this.btnBackAdditionalInfo_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1016, 534);
+            this.Controls.Add(this.btnBackAdditionalInfo);
+            this.Controls.Add(this.btnSaveAdditionalInfo);
+            this.Controls.Add(this.btnAdditionalInfo);
+            this.Controls.Add(this.btnViewAll);
             this.Controls.Add(this.btnEnter);
             this.Controls.Add(this.btnBackReports);
             this.Controls.Add(this.lbHours);
@@ -415,6 +466,7 @@ namespace DBviewer
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.SizeChanged += new System.EventHandler(this.Form1_SizeChanged);
             ((System.ComponentModel.ISupportInitialize)(this.dgvTable)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -452,6 +504,10 @@ namespace DBviewer
         private System.Windows.Forms.Label lbHours;
         private System.Windows.Forms.Button btnBackReports;
         private System.Windows.Forms.Button btnEnter;
+        private System.Windows.Forms.Button btnViewAll;
+        private System.Windows.Forms.Button btnAdditionalInfo;
+        private System.Windows.Forms.Button btnSaveAdditionalInfo;
+        private System.Windows.Forms.Button btnBackAdditionalInfo;
     }
 }
 

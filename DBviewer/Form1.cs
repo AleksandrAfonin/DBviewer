@@ -14,40 +14,151 @@ namespace DBviewer
     public partial class Form1 : Form
     {
         const string dataBase = "27231685c0687995.db";
+        const string connectionString = "Data Source=" + dataBase + "; Version=3; FailIfMissing=True";
+
         SQLiteConnection connection;
         SQLiteCommand CMD;
         SQLiteDataAdapter adapter;
         DataTable generalTable = new DataTable();
         DataTable reportsTable = new DataTable();
+        DataTable curCunsultHours = new DataTable();
+
+        Size dgvTableSize;
 
         bool isInput = false;
 
         public Form1()
         {
             InitializeComponent();
-
+            dgvTableSize = dgvTable.Size;
         }
 
+        // При загрузке формы
         private void Form1_Load(object sender, EventArgs e)
         {
+            CreateNewColumnsIfNotExist();
             CreateTableReports();
             GeneralTable();
             FillCBTeacher();
-
+            
             //Console.WriteLine("8537: " + GetStringPayment(8530));
         }
 
+        // При изменении размеров формы
+        private void Form1_SizeChanged(object sender, EventArgs e)
+        {
+            dgvTableSize.Width = this.Width - 40;
+            dgvTableSize.Height = this.Height - 165;
+            dgvTable.Size = dgvTableSize;
+        }
+
+        // Создание новых столбцов если не существуют
+        private void CreateNewColumnsIfNotExist()
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT FullFIO FROM Teachers", connection);
+                    adapter = new SQLiteDataAdapter(CMD);
+                    DataTable table = new DataTable();
+                    adapter.Fill(table);
+                }
+            }
+            catch (SQLiteException ex)
+            {
+                try
+                {
+                    using (connection = new SQLiteConnection(connectionString))
+                    {
+                        connection.Open();
+                        CMD = new SQLiteCommand("ALTER TABLE Teachers ADD COLUMN FullFIO TEXT(100)", connection);
+                        CMD.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException e)
+                {
+                    MessageBox.Show("Не удалось добавить столбец FullFIO" + e);
+                }
+
+                MessageBox.Show("Не удалось SELECT FullFIO FROM Teachers " + ex);
+            }
+
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT HErate FROM Teachers", connection);
+                    adapter = new SQLiteDataAdapter(CMD);
+                    DataTable table = new DataTable();
+                    adapter.Fill(table);
+                }
+            }
+            catch (SQLiteException ex)
+            {
+                try
+                {
+                    using (connection = new SQLiteConnection(connectionString))
+                    {
+                        connection.Open();
+                        CMD = new SQLiteCommand("ALTER TABLE Teachers ADD COLUMN HErate INTEGER", connection);
+                        CMD.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException e)
+                {
+                    MessageBox.Show("Не удалось добавить столбец HErate" + e);
+                }
+
+                MessageBox.Show("Не удалось SELECT HErate FROM Teachers " + ex);
+            }
+
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT SPErate FROM Teachers", connection);
+                    adapter = new SQLiteDataAdapter(CMD);
+                    DataTable table = new DataTable();
+                    adapter.Fill(table);
+                }
+            }
+            catch (SQLiteException ex)
+            {
+                try
+                {
+                    using (connection = new SQLiteConnection(connectionString))
+                    {
+                        connection.Open();
+                        CMD = new SQLiteCommand("ALTER TABLE Teachers ADD COLUMN SPErate INTEGER", connection);
+                        CMD.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException e)
+                {
+                    MessageBox.Show("Не удалось добавить столбец SPErate" + e);
+                }
+
+                MessageBox.Show("Не удалось SELECT SPErate FROM Teachers " + ex);
+            }
+        }
+
+        // Создание таблицы текущих консультаций для лектора, практика, лаборанта
+        private void CreateTableCurConsultHours()
+        {
+            
+        }
+        
         // Генерация общей таблицы
         private void GeneralTable()
         {
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
-                    //CMD = new SQLiteCommand("SELECT teach.Id AS '№ п_п', teach.FIO AS Преподаватель" +
-                    //                        " FROM Teachers AS teach ORDER BY teach.Id", connection);
-                    //CMD = new SQLiteCommand("SELECT teach.Id AS '№ п_п', teach.FIO AS Преподаватель" +
-                    //                        " FROM Teachers AS teach WHERE teach.FIO LIKE \"Почасов%\" ORDER BY teach.Id", connection);
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT teach.Id AS '№ п_п', teach.FIO AS Преподаватель" +
                                             " FROM Teachers AS teach ORDER BY teach.Id", connection);
@@ -160,7 +271,7 @@ namespace DBviewer
         {
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("CREATE TABLE IF NOT EXISTS Reports (Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE," +
@@ -173,8 +284,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
-                Application.Exit();
+                MessageBox.Show("Не удалось CreateTableReports");
             }
         }
 
@@ -183,7 +293,7 @@ namespace DBviewer
         {
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT Id, DisName AS Дисциплина, GroupName AS Группа, LectureHours AS Лекции, PracticeHours AS Практика," +
@@ -198,7 +308,6 @@ namespace DBviewer
             catch (SQLiteException)
             {
                 MessageBox.Show("Load Table Reports");
-                //Application.Exit();
             }
         }
 
@@ -207,7 +316,7 @@ namespace DBviewer
         {
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT Id, DisName AS Дисциплина, GroupName AS Группа, LectureHours AS Лекции, PracticeHours AS Практика," +
@@ -233,7 +342,7 @@ namespace DBviewer
         {
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT DISTINCT FIO" +
@@ -272,7 +381,7 @@ namespace DBviewer
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT LectureHours" +
@@ -297,7 +406,7 @@ namespace DBviewer
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT PracticeHours" +
@@ -320,9 +429,10 @@ namespace DBviewer
         private int GetLabHours()
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
+            int hoursLab1, hoursLab2;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT LabHours" +
@@ -330,12 +440,22 @@ namespace DBviewer
                                                 cbTeacher.Text + "') AND DisName = '" +
                                                 cbDiscipline.Text + "' AND GroupName = '" +
                                                 cbStudiesGroup.Text + "'", connection);
-                    return GetIntValue(CMD.ExecuteScalar());
+                    hoursLab1 = GetIntValue(CMD.ExecuteScalar());
+
+                    CMD = new SQLiteCommand("SELECT LabHours" +
+                                                    " FROM Disciplines WHERE IdLab2 = (SELECT Id FROM Teachers WHERE FIO = '" +
+                                                cbTeacher.Text + "') AND DisName = '" +
+                                                cbDiscipline.Text + "' AND GroupName = '" +
+                                                cbStudiesGroup.Text + "'", connection);
+                    hoursLab2 = GetIntValue(CMD.ExecuteScalar());
                 }
+
+                if (hoursLab1 == hoursLab2) return hoursLab1;
+                else return Math.Max(hoursLab1, hoursLab2) / 2;
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
+                MessageBox.Show("Не удалось GetLabHours.");
                 return 0;
                 //Application.Exit();
             }
@@ -347,7 +467,7 @@ namespace DBviewer
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT FinAttestHours" +
@@ -372,7 +492,7 @@ namespace DBviewer
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT ExamHours" +
@@ -387,7 +507,6 @@ namespace DBviewer
             {
                 MessageBox.Show("Не удалось подключиться к БД");
                 return 0;
-                //Application.Exit();
             }
         }
 
@@ -397,7 +516,7 @@ namespace DBviewer
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT SUM(LectureHours)" +
@@ -411,7 +530,6 @@ namespace DBviewer
             {
                 MessageBox.Show("Не удалось получить LectureHoursComplete");
                 return 0;
-                //Application.Exit();
             }
         }
 
@@ -421,7 +539,7 @@ namespace DBviewer
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT SUM(PracticeHours)" +
@@ -435,7 +553,6 @@ namespace DBviewer
             {
                 MessageBox.Show("Не удалось получить PracticeHoursComplete");
                 return 0;
-                //Application.Exit();
             }
         }
 
@@ -445,7 +562,7 @@ namespace DBviewer
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT SUM(LabHours)" +
@@ -459,7 +576,6 @@ namespace DBviewer
             {
                 MessageBox.Show("Не удалось получить LabHoursComplete");
                 return 0;
-                //Application.Exit();
             }
         }
 
@@ -469,7 +585,7 @@ namespace DBviewer
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT SUM(FinAttestHours)" +
@@ -483,7 +599,6 @@ namespace DBviewer
             {
                 MessageBox.Show("Не удалось получить FinAttestHoursComplete");
                 return 0;
-                //Application.Exit();
             }
         }
 
@@ -493,7 +608,7 @@ namespace DBviewer
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT SUM(ExamHours)" +
@@ -507,7 +622,6 @@ namespace DBviewer
             {
                 MessageBox.Show("Не удалось получить ExamHoursComplete");
                 return 0;
-                //Application.Exit();
             }
         }
 
@@ -572,13 +686,14 @@ namespace DBviewer
         {
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT DISTINCT DisName" +
                                             " FROM Disciplines WHERE IdLector = (SELECT Id FROM Teachers WHERE FIO = '" +
                                         cbTeacher.Text + "') OR IdPractice = (SELECT Id FROM Teachers WHERE FIO = '" +
                                         cbTeacher.Text + "') OR IdLab1 = (SELECT Id FROM Teachers WHERE FIO = '" +
+                                        cbTeacher.Text + "') OR IdLab2 = (SELECT Id FROM Teachers WHERE FIO = '" +
                                         cbTeacher.Text + "') OR IdFinAttest = (SELECT Id FROM Teachers WHERE FIO = '" +
                                         cbTeacher.Text + "') OR IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
                                         cbTeacher.Text + "')", connection);
@@ -594,7 +709,6 @@ namespace DBviewer
             catch (SQLiteException)
             {
                 MessageBox.Show("Не удалось подключиться к БД");
-                Application.Exit();
             }
         }
 
@@ -603,13 +717,14 @@ namespace DBviewer
         {
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT DISTINCT GroupName" +
                                                     " FROM Disciplines WHERE (IdLector = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') OR IdPractice = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') OR IdLab1 = (SELECT Id FROM Teachers WHERE FIO = '" +
+                                                cbTeacher.Text + "') OR IdLab2 = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') OR IdFinAttest = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') OR IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "')) AND DisName = '" + cbDiscipline.Text + "'", connection);
@@ -624,17 +739,18 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
-                Application.Exit();
+                MessageBox.Show("Не удалось SetGroupCBStudiesGroup");
             }
         }
 
         // Заполнение элементов ComboBox TypeOfActivity
         private void SetActivityCBTypeOfActivity()
         {
+            bool lab1 = false;
+            bool lab2 = false;
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     cbTypeOfActivity.Items.Clear();
                     connection.Open();
@@ -663,7 +779,18 @@ namespace DBviewer
                     adapter = new SQLiteDataAdapter(CMD);
                     table = new DataTable();
                     adapter.Fill(table);
-                    if (table.Rows.Count != 0) cbTypeOfActivity.Items.Add("Лабораторные");
+                    if (table.Rows.Count != 0) lab1 = true;
+
+                    CMD = new SQLiteCommand("SELECT DisName, GroupName" +
+                                            " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" +
+                                            cbStudiesGroup.Text + "' AND IdLab2 = (SELECT Id FROM Teachers WHERE FIO = '" +
+                                            cbTeacher.Text + "')", connection);
+                    adapter = new SQLiteDataAdapter(CMD);
+                    table = new DataTable();
+                    adapter.Fill(table);
+                    if (table.Rows.Count != 0) lab2 = true;
+                    
+                    if (lab1 || lab2) cbTypeOfActivity.Items.Add("Лабораторные");
 
                     CMD = new SQLiteCommand("SELECT DisName, GroupName" +
                                             " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" +
@@ -690,7 +817,6 @@ namespace DBviewer
             catch (SQLiteException)
             {
                 MessageBox.Show("Не удалось подключиться к БД");
-                Application.Exit();
             }
         }
 
@@ -699,7 +825,7 @@ namespace DBviewer
         {
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT LevelEducation" +
@@ -716,7 +842,6 @@ namespace DBviewer
             catch (SQLiteException)
             {
                 MessageBox.Show("Не удалось подключиться к БД");
-                Application.Exit();
             }
         }
 
@@ -729,6 +854,7 @@ namespace DBviewer
             lbTeacher.Visible = true; cbTeacher.Visible = true;
             btnIntel.Visible = false; btnBackGeneral.Visible = true;
             btnInput.Visible = true; btnPaid.Visible = true;
+            btnViewAll.Visible = true; btnAdditionalInfo.Visible = false;
 
             cbMonth.SelectedIndex = DateTime.Today.Month - 1;
             cbYear.SelectedItem = DateTime.Today.Year.ToString();
@@ -741,18 +867,24 @@ namespace DBviewer
         // Возврат на общую форму из формы отчетов
         private void btnBackGeneral_Click(object sender, EventArgs e)
         {
-            //isInput = false;
-
             lbMonth.Visible = false; cbMonth.Visible = false;
             lbYear.Visible = false; cbYear.Visible = false;
             lbStadiesForm.Visible = false; cbStudiesForm.Visible = false;
             lbTeacher.Visible = false; cbTeacher.Visible = false;
             btnIntel.Visible = true; btnBackGeneral.Visible = false;
             btnInput.Visible = false; btnPaid.Visible = false;
+            btnViewAll.Visible = false; btnAdditionalInfo.Visible = true;
 
             cbTeacher.SelectedIndex = -1;
 
             dgvTable.DataSource = generalTable;
+        }
+
+        // Показать весь Report
+        private void btnViewAll_Click(object sender, EventArgs e)
+        {
+            cbTeacher.SelectedIndex = -1;
+            LoadTableReports();
         }
 
         // Пометка оплаты 
@@ -764,9 +896,15 @@ namespace DBviewer
                 return;
             }
 
+            if (cbTeacher.SelectedIndex == -1)
+            {
+                MessageBox.Show("Преподаватель не выбран.");
+                return;
+            }
+
             try
             {
-                using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
                     foreach (DataRow row in reportsTable.Rows)
@@ -783,7 +921,6 @@ namespace DBviewer
             {
                 MessageBox.Show("Не удалось отметить оплату.");
                 return;
-                //Application.Exit();
             }
         }
 
@@ -792,7 +929,7 @@ namespace DBviewer
         {
             btnBackReports.Visible = true; btnBackGeneral.Visible = false; btnInput.Visible = false;
             cbStudiesForm.Visible = false; lbStadiesForm.Visible = false; btnPaid.Visible = false;
-            btnEnter.Visible = true;
+            btnViewAll.Visible = false; btnEnter.Visible = true;
             cbDay.Visible = true; lbDay.Visible = true;
             cbDiscipline.Visible = true; lbDiscipline.Visible = true;
             cbStudiesGroup.Visible = true; lbStudiesGroup.Visible = true;
@@ -813,7 +950,7 @@ namespace DBviewer
         {
             btnBackReports.Visible = false; btnBackGeneral.Visible = true; btnInput.Visible = true;
             cbStudiesForm.Visible = true; lbStadiesForm.Visible = true; btnPaid.Visible = true;
-            btnEnter.Visible = false;
+            btnViewAll.Visible = true; btnEnter.Visible = false;
             cbDay.Visible = false; lbDay.Visible = false;
             cbDiscipline.Visible = false; lbDiscipline.Visible = false;
             cbStudiesGroup.Visible = false; lbStudiesGroup.Visible = false;
@@ -857,7 +994,7 @@ namespace DBviewer
             {
                 try
                 {
-                    using (connection = new SQLiteConnection("Data Source=" + dataBase + "; Version=3; FailIfMissing=True"))
+                    using (connection = new SQLiteConnection(connectionString))
                     {
                         connection.Open();
                         CMD = new SQLiteCommand("INSERT INTO Reports (DisName, GroupName, " + GetFieldName() +
@@ -870,20 +1007,87 @@ namespace DBviewer
                         LoadTableReports();
                         dgvTable.DataSource = reportsTable;
                     }
+                    MessageBox.Show("Данные успешно внесены.");
+                    cbTypeOfActivity.SelectedIndex = -1;
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Вылет в INSERTe: " + ex.ToString());
-                    //Application.Exit();
+                    MessageBox.Show("Вылет в INSERTe: " + ex);
                 }
             }
+        }
+
+        // Ввод дополнительной информации о преподавателях
+        private void btnAdditionalInfo_Click(object sender, EventArgs e)
+        {
+            btnSaveAdditionalInfo.Visible = true; btnBackAdditionalInfo.Visible = true;
+            btnAdditionalInfo.Visible = false; btnIntel.Visible = false;
+
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT Id, FIO AS Преподаватель, FullFIO AS 'Полное ФИО', HErate AS 'Ставка ВО', SPErate AS 'Ставка СПО'" +
+                        " FROM Teachers WHERE FIO LIKE '%Почасов%'", connection);
+                    adapter = new SQLiteDataAdapter(CMD);
+                    DataTable table = new DataTable();
+                    adapter.Fill(table);
+                    dgvTable.DataSource = table;
+                }
+
+                dgvTable.ReadOnly = false;
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось btnAdditionalInfo_Click");
+            }
+        }
+
+        // Возврат из ввода дополнительной информации без сохранения
+        private void btnBackAdditionalInfo_Click(object sender, EventArgs e)
+        {
+            btnSaveAdditionalInfo.Visible = false; btnBackAdditionalInfo.Visible = false;
+            btnAdditionalInfo.Visible = true; btnIntel.Visible = true;
+
+            dgvTable.DataSource = generalTable; dgvTable.ReadOnly = true;
+        }
+
+        // Сохранение дополнительной информации и возврат
+        private void btnSaveAdditionalInfo_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    foreach (DataGridViewRow row in dgvTable.Rows)
+                    {
+                        CMD = new SQLiteCommand("UPDATE Teachers SET FullFIO = '" + row.Cells["Полное ФИО"].Value +
+                                "', HErate = " + GetIntValue(row.Cells["Ставка ВО"].Value) +
+                                ", SPErate = " + GetIntValue(row.Cells["Ставка СПО"].Value) +
+                                " WHERE Id = " + row.Cells["Id"].Value, connection);
+                        CMD.ExecuteNonQuery();
+                    }
+                }
+                MessageBox.Show("Данные успешно внесены.");
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось внести данные.");
+            }
+
+            btnSaveAdditionalInfo.Visible = false; btnBackAdditionalInfo.Visible = false;
+            btnAdditionalInfo.Visible = true; btnIntel.Visible = true;
+
+            dgvTable.DataSource = generalTable; dgvTable.ReadOnly = true;
         }
 
         // Обработка изменения месяца
         private void cbMonth_SelectedIndexChanged(object sender, EventArgs e)
         {
             DaysInMonth();
-            cbHalfYear.SelectedIndex = cbMonth.SelectedIndex > 6 && cbMonth.SelectedIndex < 12 ? 0 : 1;
+            cbHalfYear.SelectedIndex = cbMonth.SelectedIndex < 8 && cbMonth.SelectedIndex > 0 ? 1 : 0;
             if (!isInput)
             {
                 LoadTableReportsWithArguments();
@@ -929,6 +1133,7 @@ namespace DBviewer
             SetLevelCBLevelEducation();
         }
 
+        // Обработка изменения вида занятий
         private void cbTypeOfActivity_SelectedIndexChanged(object sender, EventArgs e)
         {
             tbHours.Text = "";
@@ -941,6 +1146,7 @@ namespace DBviewer
             lbHours.Text = "Часы(доступно: " + (GetHoursPlan() - GetCompleteHours()) + ")";
         }
 
+        // Обработка изменения формы обучения
         private void cbStudiesForm_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (!isInput)
@@ -948,5 +1154,7 @@ namespace DBviewer
                 LoadTableReportsWithArguments();
             }
         }
+
+        
     }
 }
