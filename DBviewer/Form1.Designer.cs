@@ -165,7 +165,7 @@ namespace DBviewer
             this.btnIntel.TabIndex = 9;
             this.btnIntel.Text = "Сведения о проведенных занятиях";
             this.btnIntel.UseVisualStyleBackColor = true;
-            this.btnIntel.Click += new System.EventHandler(this.btnFillForm_Click);
+            this.btnIntel.Click += new System.EventHandler(this.btnIntel_Click);
             // 
             // cbMonth
             // 

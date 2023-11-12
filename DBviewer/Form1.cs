@@ -19,9 +19,11 @@ namespace DBviewer
         SQLiteConnection connection;
         SQLiteCommand CMD;
         SQLiteDataAdapter adapter;
+        DataTable disciplinesTable = new DataTable();
+        DataTable teachersTable = new DataTable();
         DataTable generalTable = new DataTable();
         DataTable reportsTable = new DataTable();
-        DataTable curCunsultHours = new DataTable();
+        DataTable curConsultHoursTable = new DataTable();
 
         Size dgvTableSize;
 
@@ -36,12 +38,17 @@ namespace DBviewer
         // При загрузке формы
         private void Form1_Load(object sender, EventArgs e)
         {
+            LoadDisciplinesTable();
             CreateNewColumnsIfNotExist();
             CreateTableReports();
+            LoadTeachersTable();
+            CreateTableCurConsultHours();
             GeneralTable();
             FillCBTeacher();
+
             
-            //Console.WriteLine("8537: " + GetStringPayment(8530));
+
+            //dgvTable.DataSource = curConsultHoursTable;
         }
 
         // При изменении размеров формы
@@ -50,6 +57,46 @@ namespace DBviewer
             dgvTableSize.Width = this.Width - 40;
             dgvTableSize.Height = this.Height - 165;
             dgvTable.Size = dgvTableSize;
+        }
+
+        // Загрузка таблицы Disciplines
+        private void LoadDisciplinesTable()
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT * FROM Disciplines", connection);
+                    adapter = new SQLiteDataAdapter(CMD);
+                    adapter.Fill(disciplinesTable);
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось SELECT * FROM Disciplines LoadDisciplinesTable");
+                Application.Exit();
+            }
+        }
+
+        // Загрузка таблицы Teachers
+        private void LoadTeachersTable()
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT * FROM Teachers", connection);
+                    adapter = new SQLiteDataAdapter(CMD);
+                    adapter.Fill(teachersTable);
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось SELECT * FROM Disciplines");
+                //Application.Exit();
+            }
         }
 
         // Создание новых столбцов если не существуют
@@ -146,10 +193,138 @@ namespace DBviewer
             }
         }
 
+        // Проверка на текущую консультацию
+        private bool CheckForCurConsult()
+        {
+            bool isCurConsult = false;
+            string disName = cbDiscipline.Text;
+            string groupName = cbStudiesGroup.Text;
+            string teacherName = cbTeacher.Text;
+
+            foreach(DataRow dataRow in curConsultHoursTable.Rows)
+            {
+                if (dataRow["DisName"].ToString() == disName && dataRow["GroupName"].ToString() == groupName &&
+                     (dataRow["FIOLector"].ToString() == teacherName || dataRow["FIOPractice"].ToString() == teacherName ||
+                      dataRow["FIOLab1"].ToString() == teacherName || dataRow["FIOLab2"].ToString() == teacherName))
+                    isCurConsult = true;
+            }
+            return isCurConsult;
+        }
+
         // Создание таблицы текущих консультаций для лектора, практика, лаборанта
         private void CreateTableCurConsultHours()
         {
-            
+            curConsultHoursTable.Columns.Add("DisName", typeof(String));
+            curConsultHoursTable.Columns.Add("GroupName", typeof(String));
+            curConsultHoursTable.Columns.Add("FIOLector", typeof(String));
+            curConsultHoursTable.Columns.Add("LectorHours", typeof(Int32));
+            curConsultHoursTable.Columns.Add("FIOPractice", typeof(String));
+            curConsultHoursTable.Columns.Add("PracticeHours", typeof(Int32));
+            curConsultHoursTable.Columns.Add("FIOLab1", typeof(String));
+            curConsultHoursTable.Columns.Add("Lab1Hours", typeof(Int32));
+            curConsultHoursTable.Columns.Add("FIOLab2", typeof(String));
+            curConsultHoursTable.Columns.Add("Lab2Hours", typeof(Int32));
+
+            foreach(DataRow row in disciplinesTable.Rows)
+            {
+                int curConsultHours = GetIntValue(row["CurConsultHours"]);
+
+                if (curConsultHours == 0) continue;
+
+                int idLector = GetIntValue(row["IdLector"]);
+                int idPractice = GetIntValue(row["IdPractice"]);
+                int idLab1 = GetIntValue(row["IdLab1"]);
+                int idLab2 = GetIntValue(row["IdLab2"]);
+
+                int letureHours = GetIntValue(row["LectureHours"]);
+                int practiceHours = GetIntValue(row["PracticeHours"]);
+                int labHours = GetIntValue(row["LabHours"]);
+
+                int sumAud = letureHours + practiceHours + labHours;
+                int curConLector = curConsultHours * letureHours / sumAud;
+                int curConPractice = curConsultHours * practiceHours / sumAud;
+                int curConLab1 = curConsultHours * labHours / sumAud;
+                int curConLab2 = 0;
+
+                if(idLab1 != 0 && idLab2 != 0)
+                {
+                    curConLab1 /= 2;
+                    curConLab2 = curConLab1;
+                }
+
+                if(curConsultHours < curConLector + curConPractice + curConLab1 + curConLab2)
+                {
+                    if (curConLab2 > 0) curConLab2--;
+                    if (curConsultHours < curConLector + curConPractice + curConLab1 + curConLab2)
+                    {
+                        if (curConLab1 > 0) curConLab1--;
+                        if (curConsultHours < curConLector + curConPractice + curConLab1 + curConLab2)
+                        {
+                            if (curConPractice > 0) curConPractice--;
+                            if (curConsultHours < curConLector + curConPractice + curConLab1 + curConLab2)
+                            {
+                                if (curConLector > 0) curConLector--;
+                            }
+                        }
+                    }
+                }
+                else if (curConsultHours > curConLector + curConPractice + curConLab1 + curConLab2)
+                {
+                    if (idLector != 0) curConLector++;
+                    if (curConsultHours > curConLector + curConPractice + curConLab1 + curConLab2)
+                    {
+                        if (idPractice != 0) curConPractice++;
+                        if (curConsultHours > curConLector + curConPractice + curConLab1 + curConLab2)
+                        {
+                            if (idLab1 != 0) curConLab1++;
+                            if (curConsultHours > curConLector + curConPractice + curConLab1 + curConLab2)
+                            {
+                                if (idLab2 != 0) curConLab2++;
+                            }
+                        }
+                    }
+                }
+
+                string FIOLector = "", FIOPractice = "", FIOLab1 = "", FIOLab2 = "";
+                // Получить лектора, практика, лаборантов
+                try
+                {
+                    using (connection = new SQLiteConnection(connectionString))
+                    {
+                        connection.Open();
+                        CMD = new SQLiteCommand("SELECT FIO FROM Teachers WHERE Id = " + idLector, connection);
+                        FIOLector = GetStringValue(CMD.ExecuteScalar());
+
+                        CMD = new SQLiteCommand("SELECT FIO FROM Teachers WHERE Id = " + idPractice, connection);
+                        FIOPractice = GetStringValue(CMD.ExecuteScalar());
+
+                        CMD = new SQLiteCommand("SELECT FIO FROM Teachers WHERE Id = " + idLab1, connection);
+                        FIOLab1 = GetStringValue(CMD.ExecuteScalar());
+
+                        CMD = new SQLiteCommand("SELECT FIO FROM Teachers WHERE Id = " + idLab2, connection);
+                        FIOLab2 = GetStringValue(CMD.ExecuteScalar());
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    MessageBox.Show("Не удалось FIO Teachers");
+                }
+
+                DataRow tableRow = curConsultHoursTable.NewRow();
+
+                tableRow["DisName"] = row["DisName"];
+                tableRow["GroupName"] = row["GroupName"];
+                tableRow["FIOLector"] = FIOLector;
+                tableRow["LectorHours"] = curConLector;
+                tableRow["FIOPractice"] = FIOPractice;
+                tableRow["PracticeHours"] = curConPractice;
+                tableRow["FIOLab1"] = FIOLab1;
+                tableRow["Lab1Hours"] = curConLab1;
+                tableRow["FIOLab2"] = FIOLab2;
+                tableRow["Lab2Hours"] = curConLab2;
+
+                curConsultHoursTable.Rows.Add(tableRow);
+            }
         }
         
         // Генерация общей таблицы
@@ -164,37 +339,33 @@ namespace DBviewer
                                             " FROM Teachers AS teach ORDER BY teach.Id", connection);
                     adapter = new SQLiteDataAdapter(CMD);
                     adapter.Fill(generalTable);
-                    generalTable.Columns.Add(new DataColumn("Лек план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Лек вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Практ план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Практ вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Лаб план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Лаб вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("ТекКонс план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("ТекКонс вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("КонсЭкз план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("КонсЭкз вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("ОргСРС план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("ОргСРС вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Рейтинг план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Рейтинг вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Экзамен план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Экзамен вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Зачет план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Зачет вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("ИтогАттест план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("ИтогАттест вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Всего план", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Всего вып", Type.GetType("System.Int32")));
-                    generalTable.Columns.Add(new DataColumn("Объем нагр", Type.GetType("System.Int32")));
-                    FillGeneralTable();
-                    dgvTable.DataSource = generalTable;
+                    generalTable.Columns.Add("Лекции план", typeof(Int32));
+                    generalTable.Columns.Add("Лекции выполнено", typeof(Int32));
+                    generalTable.Columns.Add("Практика план", typeof(Int32));
+                    generalTable.Columns.Add("Практика выполнено", typeof(Int32));
+                    generalTable.Columns.Add("Лабораторные план", typeof(Int32));
+                    generalTable.Columns.Add("Лабораторные выполнено", typeof(Int32));
+                    generalTable.Columns.Add("ТекКонсультации план", typeof(Int32));
+                    generalTable.Columns.Add("ТекКонсультации выполнено", typeof(Int32));
+                    generalTable.Columns.Add("Предэкзаменационные консультации план", typeof(Int32));
+                    generalTable.Columns.Add("Предэкзаменационные консультации выполнено", typeof(Int32));
+                    generalTable.Columns.Add("Экзамены план", typeof(Int32));
+                    generalTable.Columns.Add("Экзамены выполнено", typeof(Int32));
+                    generalTable.Columns.Add("Зачеты план", typeof(Int32));
+                    generalTable.Columns.Add("Зачеты выполнено", typeof(Int32));
+                    generalTable.Columns.Add("Итоговые аттестации план", typeof(Int32));
+                    generalTable.Columns.Add("Итоговые аттестации выполнено", typeof(Int32));
+                    generalTable.Columns.Add("Всего план", typeof(Int32));
+                    generalTable.Columns.Add("Всего выполнено", typeof(Int32));
+                    generalTable.Columns.Add("Объем нагрузки", typeof(Int32));
                 }
+                FillGeneralTable();
+                dgvTable.DataSource = generalTable;
             }
-            catch (SQLiteException es)
+            catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД" + es.Message);
-                Application.Exit();
+                MessageBox.Show("Не удалось GeneralTable");
+                //Application.Exit();
             }
         }
 
@@ -215,48 +386,96 @@ namespace DBviewer
         // Заполнение главной таблицы
         private void FillGeneralTable()
         {
-            foreach (DataRow row in generalTable.Rows)
+            LoadTableReports();
+
+            foreach(DataRow row in generalTable.Rows)
             {
-                CMD = new SQLiteCommand("SELECT SUM(LectureHours) FROM Disciplines WHERE Disciplines.IdLector = (SELECT Id FROM Teachers WHERE FIO = '" +
-                                        row["Преподаватель"].ToString() + "')", connection);
-                row["Лек план"] = CMD.ExecuteScalar();
+                int sumLectureHours = 0, sumPracticeHours = 0, sumLabHours = 0, 
+                    sumExamConsultHours = 0, sumCreditHours = 0, sumExamHours = 0, sumFinAttestHours = 0;
+                string name = GetTeacherHours(GetStringValue(row["Преподаватель"]));
 
-                CMD = new SQLiteCommand("SELECT SUM(LectureHours) FROM Reports WHERE IaGakGek LIKE '%" + GetTeacherHours(row["Преподаватель"].ToString()) + "%'", connection);
-                row["Лек вып"] = CMD.ExecuteScalar();
+                foreach (DataRow disRow in disciplinesTable.Rows)
+                {
+                    if (GetIntValue(disRow["IdLector"]) == GetIntValue(row["№ п_п"])) sumLectureHours += GetIntValue(disRow["LectureHours"]);
+                    if (GetIntValue(disRow["IdPractice"]) == GetIntValue(row["№ п_п"])) sumPracticeHours += GetIntValue(disRow["PracticeHours"]);
+                    if (GetIntValue(disRow["IdLab1"]) == GetIntValue(row["№ п_п"]) && GetIntValue(disRow["IdLab2"]) == GetIntValue(row["№ п_п"])) sumLabHours += GetIntValue(disRow["LabHours"]);
+                    if ((GetIntValue(disRow["IdLab1"]) == GetIntValue(row["№ п_п"]) && GetIntValue(disRow["IdLab2"]) != GetIntValue(row["№ п_п"])) ||
+                        (GetIntValue(disRow["IdLab1"]) != GetIntValue(row["№ п_п"]) && GetIntValue(disRow["IdLab2"]) == GetIntValue(row["№ п_п"]))) sumLabHours += (GetIntValue(disRow["LabHours"]) / 2);
+                    if (GetIntValue(disRow["IdExam"]) == GetIntValue(row["№ п_п"])) 
+                    { 
+                        sumExamConsultHours += GetIntValue(disRow["ExamConsultHours"]); 
+                        sumExamHours += GetIntValue(disRow["ExamHours"]);
+                        sumCreditHours += GetIntValue(disRow["CreditHours"]);
+                    }
+                    if (GetIntValue(disRow["IdFinAttest"]) == GetIntValue(row["№ п_п"])) sumFinAttestHours += GetIntValue(disRow["FinAttestHours"]);
+                }
 
-                CMD = new SQLiteCommand("SELECT SUM(PracticeHours) FROM Disciplines WHERE Disciplines.IdPractice = (SELECT Id FROM Teachers WHERE FIO = '" +
-                                        row["Преподаватель"].ToString() + "')", connection);
-                row["Практ план"] = CMD.ExecuteScalar();
+                if (sumLectureHours != 0) row["Лекции план"] = sumLectureHours;
+                if (sumPracticeHours != 0) row["Практика план"] = sumPracticeHours;
+                if (sumLabHours != 0) row["Лабораторные план"] = sumLabHours;
+                int sum = GetSumCurConsultHour(GetStringValue(row["Преподаватель"]));
+                if (sum != 0) row["ТекКонсультации план"] = sum;
+                if (sumExamConsultHours != 0) row["Предэкзаменационные консультации план"] = sumExamConsultHours;
+                if (sumExamHours != 0) row["Экзамены план"] = sumExamHours;
+                if (sumCreditHours != 0) row["Зачеты план"] = sumCreditHours;
+                if (sumFinAttestHours != 0) row["Итоговые аттестации план"] = sumFinAttestHours;
 
-                CMD = new SQLiteCommand("SELECT SUM(PracticeHours) FROM Reports WHERE IaGakGek LIKE '%" + GetTeacherHours(row["Преподаватель"].ToString()) + "%'", connection);
-                row["Практ вып"] = CMD.ExecuteScalar();
+                sumLectureHours = 0; sumPracticeHours = 0; sumLabHours = 0; 
+                sumExamConsultHours = 0; sumCreditHours = 0; sumExamHours = 0; sumFinAttestHours = 0;
+                int sumCurConsultHours = 0;
 
-                CMD = new SQLiteCommand("SELECT SUM(LabHours) FROM Disciplines WHERE Disciplines.IdLab1 = (SELECT Id FROM Teachers WHERE FIO = '" +
-                                        row["Преподаватель"].ToString() + "')", connection);
-                row["Лаб план"] = CMD.ExecuteScalar();
+                foreach (DataRow repRow in reportsTable.Rows)
+                {
+                    if(GetStringValue(repRow["ИА ГАК ГЭК"]).Contains(name))
+                    {
+                        sumLectureHours += GetIntValue(repRow["Лекции"]);
+                        sumPracticeHours += GetIntValue(repRow["Практика"]);
+                        sumLabHours += GetIntValue(repRow["Лабораторные"]);
+                        sumCurConsultHours += GetIntValue(repRow["Текущие консультации"]);
+                        sumExamConsultHours += GetIntValue(repRow["Предэкзаменационные консультации"]);
+                        sumExamHours += GetIntValue(repRow["Экзамены"]);
+                        sumCreditHours += GetIntValue(repRow["Зачеты"]);
+                        sumFinAttestHours += GetIntValue(repRow["Итоговая аттестация"]);
+                    }
+                }
 
-                CMD = new SQLiteCommand("SELECT SUM(LabHours) FROM Reports WHERE IaGakGek LIKE '%" + GetTeacherHours(row["Преподаватель"].ToString()) + "%'", connection);
-                row["Лаб вып"] = CMD.ExecuteScalar();
+                if (sumLectureHours != 0) row["Лекции выполнено"] = sumLectureHours;
+                if (sumPracticeHours != 0) row["Практика выполнено"] = sumPracticeHours;
+                if (sumLabHours != 0) row["Лабораторные выполнено"] = sumLabHours;
+                if (sumCurConsultHours != 0) row["ТекКонсультации выполнено"] = sumCurConsultHours;
+                if (sumExamConsultHours != 0) row["Предэкзаменационные консультации выполнено"] = sumExamConsultHours;
+                if (sumExamHours != 0) row["Экзамены выполнено"] = sumExamHours;
+                if (sumCreditHours != 0) row["Зачеты выполнено"] = sumCreditHours;
+                if (sumFinAttestHours != 0) row["Итоговые аттестации выполнено"] = sumFinAttestHours;
 
-                CMD = new SQLiteCommand("SELECT SUM(ExamHours) FROM Disciplines WHERE Disciplines.IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
-                                        row["Преподаватель"].ToString() + "')", connection);
-                row["Экзамен план"] = CMD.ExecuteScalar();
 
-                CMD = new SQLiteCommand("SELECT SUM(ExamHours) FROM Reports WHERE IaGakGek LIKE '%" + GetTeacherHours(row["Преподаватель"].ToString()) + "%'", connection);
-                row["Экзамен вып"] = CMD.ExecuteScalar();
+                sum = GetIntValue(row["Лекции план"]) + GetIntValue(row["Практика план"]) +
+                                    GetIntValue(row["Лабораторные план"]) + GetIntValue(row["ТекКонсультации план"]) +
+                                    GetIntValue(row["Предэкзаменационные консультации план"]) + GetIntValue(row["Экзамены план"]) +
+                                    GetIntValue(row["Зачеты план"]) + GetIntValue(row["Итоговые аттестации план"]);
+                if (sum != 0) row["Всего план"] = sum;
 
-                CMD = new SQLiteCommand("SELECT SUM(FinAttestHours) FROM Disciplines WHERE Disciplines.IdFinAttest = (SELECT Id FROM Teachers WHERE FIO = '" +
-                                        row["Преподаватель"].ToString() + "')", connection);
-                row["ИтогАттест план"] = CMD.ExecuteScalar();
-
-                CMD = new SQLiteCommand("SELECT SUM(FinAttestHours) FROM Reports WHERE IaGakGek LIKE '%" + GetTeacherHours(row["Преподаватель"].ToString()) + "%'", connection);
-                row["ИтогАттест вып"] = CMD.ExecuteScalar();
-
-                row["Всего план"] = GetIntValue(row["Лек план"]) + GetIntValue(row["Практ план"]) + GetIntValue(row["Лаб план"]) +
-                                    GetIntValue(row["Экзамен план"]) + GetIntValue(row["ИтогАттест план"]);
-                row["Всего вып"] = GetIntValue(row["Лек вып"]) + GetIntValue(row["Практ вып"]) + GetIntValue(row["Лаб вып"]) +
-                                    GetIntValue(row["Экзамен вып"]) + GetIntValue(row["ИтогАттест вып"]);
+                sum = GetIntValue(row["Лекции выполнено"]) + GetIntValue(row["Практика выполнено"]) +
+                                    GetIntValue(row["Лабораторные выполнено"]) + GetIntValue(row["ТекКонсультации выполнено"]) +
+                                    GetIntValue(row["Предэкзаменационные консультации выполнено"]) + GetIntValue(row["Экзамены выполнено"]) +
+                                    GetIntValue(row["Зачеты выполнено"]) + GetIntValue(row["Итоговые аттестации выполнено"]);
+                if (sum != 0) row["Всего выполнено"] = sum;
             }
+
+        }
+
+        // Получить сумму часов текущих консультаций для преподавателя
+        private int GetSumCurConsultHour(string fio)
+        {
+            int sum = 0;
+            foreach (DataRow dataRow in curConsultHoursTable.Rows)
+            {
+                if (fio == GetStringValue(dataRow["FIOLector"])) sum += GetIntValue(dataRow["LectorHours"]);
+                if (fio == GetStringValue(dataRow["FIOPractice"])) sum += GetIntValue(dataRow["PracticeHours"]);
+                if (fio == GetStringValue(dataRow["FIOLab1"])) sum += GetIntValue(dataRow["Lab1Hours"]);
+                if (fio == GetStringValue(dataRow["FIOLab2"])) sum += GetIntValue(dataRow["Lab2Hours"]);
+            }
+            return sum;
         }
 
         // Получить преподавателя почасовика
@@ -276,8 +495,8 @@ namespace DBviewer
                     connection.Open();
                     CMD = new SQLiteCommand("CREATE TABLE IF NOT EXISTS Reports (Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE," +
                             " DisName TEXT(100), GroupName TEXT(20), LectureHours INTEGER, PracticeHours INTEGER," +
-                            " LabHours INTEGER, CurConsultHours INTEGER, ExamConsultHours INTEGER, IWSHours INTEGER," +
-                            " RatingHours INTEGER, ExamHours INTEGER, CreditHours INTEGER, FinAttestHours INTEGER," +
+                            " LabHours INTEGER, CurConsultHours INTEGER, ExamConsultHours INTEGER," +
+                            " ExamHours INTEGER, CreditHours INTEGER, FinAttestHours INTEGER," +
                             " TotalHours INTEGER, Date TEXT(10), IaGakGek TEXT(100), PaymentMark TEXT(20))", connection);
                     CMD.ExecuteNonQuery();
                 }
@@ -297,8 +516,8 @@ namespace DBviewer
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT Id, DisName AS Дисциплина, GroupName AS Группа, LectureHours AS Лекции, PracticeHours AS Практика," +
-                        " LabHours AS Лабораторные, CurConsultHours AS 'Текущие консутьтации', ExamConsultHours AS 'Экзаменационные консультации', IWSHours," +
-                        " RatingHours AS Рейтинг, ExamHours AS Экзамен, CreditHours AS Зачеты, FinAttestHours AS 'Итоговая аттестация'," +
+                        " LabHours AS Лабораторные, CurConsultHours AS 'Текущие консультации', ExamConsultHours AS 'Предэкзаменационные консультации'," +
+                        " ExamHours AS Экзамены, CreditHours AS Зачеты, FinAttestHours AS 'Итоговая аттестация'," +
                         " TotalHours AS Всего, Date AS Дата, IaGakGek AS 'ИА ГАК ГЭК', PaymentMark AS Оплата FROM Reports", connection);
                     adapter = new SQLiteDataAdapter(CMD);
                     reportsTable.Clear();
@@ -307,7 +526,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Load Table Reports");
+                MessageBox.Show("Не удалось Load Table Reports");
             }
         }
 
@@ -320,8 +539,8 @@ namespace DBviewer
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT Id, DisName AS Дисциплина, GroupName AS Группа, LectureHours AS Лекции, PracticeHours AS Практика," +
-                        " LabHours AS Лабораторные, CurConsultHours AS 'Текущие консутьтации', ExamConsultHours AS 'Экзаменационные консультации', IWSHours," +
-                        " RatingHours AS Рейтинг, ExamHours AS Экзамен, CreditHours AS Зачеты, FinAttestHours AS 'Итоговая аттестация'," +
+                        " LabHours AS Лабораторные, CurConsultHours AS 'Текущие консультации', ExamConsultHours AS 'Предэкзаменационные консультации'," +
+                        " ExamHours AS Экзамены, CreditHours AS Зачеты, FinAttestHours AS 'Итоговая аттестация'," +
                         " TotalHours AS Всего, Date AS Дата, IaGakGek AS 'ИА ГАК ГЭК', PaymentMark AS Оплата FROM Reports WHERE" +
                         " IaGakGek LIKE '" + GetStringWith0(cbMonth.SelectedIndex + 1) + "%' AND IaGakGek LIKE '%" + cbYear.Text + "%' AND IaGakGek LIKE '%" +
                         cbTeacher.Text + "%' AND IaGakGek LIKE '%" + cbStudiesForm.Text + "%' AND PaymentMark IS NULL", connection);
@@ -375,7 +594,7 @@ namespace DBviewer
             }
         }
 
-        // Получить количество часов по плану для лекций
+        // Получить количество часов по плану для лекций *
         private int GetLectureHours()
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
@@ -394,13 +613,13 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
+                MessageBox.Show("Не удалось GetLectureHours");
                 return 0;
                 //Application.Exit();
             }
         }
 
-        // Получить количесво часов по плану для практики
+        // Получить количесво часов по плану для практики *
         private int GetPracticeHours()
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
@@ -419,13 +638,13 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
+                MessageBox.Show("Не удалось GetPracticeHours");
                 return 0;
                 //Application.Exit();
             }
         }
 
-        // Получить количесво часов по плану для лабораторных
+        // Получить количесво часов по плану для лабораторных *
         private int GetLabHours()
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
@@ -455,13 +674,13 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось GetLabHours.");
+                MessageBox.Show("Не удалось GetLabHours");
                 return 0;
                 //Application.Exit();
             }
         }
 
-        // Получить количесво часов по плану для аттестации
+        // Получить количесво часов по плану для аттестации *
         private int GetFinAttestHours()
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
@@ -480,13 +699,81 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
+                MessageBox.Show("Не удалось GetFinAttestHours");
                 return 0;
-                //Application.Exit();
             }
         }
 
-        // Получить количесво часов по плану для экзамена
+        // Получить количество часов по плану для текущей консультации *
+        private int GetCurConsultHours()
+        {
+            int sumCurConsult = 0;
+            string disName = cbDiscipline.Text;
+            string groupName = cbStudiesGroup.Text;
+            string teacherName = cbTeacher.Text;
+
+            foreach (DataRow dataRow in curConsultHoursTable.Rows)
+            {
+                if (dataRow["DisName"].ToString() == disName && dataRow["GroupName"].ToString() == groupName)
+                {
+                    if (dataRow["FIOLector"].ToString() == teacherName) sumCurConsult += GetIntValue(dataRow["LectorHours"]);
+                    if (dataRow["FIOPractice"].ToString() == teacherName) sumCurConsult += GetIntValue(dataRow["PracticeHours"]);
+                    if (dataRow["FIOLab1"].ToString() == teacherName) sumCurConsult += GetIntValue(dataRow["Lab1Hours"]);
+                    if (dataRow["FIOLab2"].ToString() == teacherName) sumCurConsult += GetIntValue(dataRow["Lab2Hours"]);
+                }
+            }
+            return sumCurConsult;
+        }
+
+        // Получить количество часов по плану для зачетов *
+        private int GetCreditHours()
+        {
+            if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT CreditHours" +
+                                                    " FROM Disciplines WHERE IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
+                                                cbTeacher.Text + "') AND DisName = '" +
+                                                cbDiscipline.Text + "' AND GroupName = '" +
+                                                cbStudiesGroup.Text + "'", connection);
+                    return GetIntValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось GetCreditHours");
+                return 0;
+            }
+        }
+
+        // Получить количество часов по плану для предэкзаменационных консультаций *
+        private int GetExamConsultHours()
+        {
+            if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT ExamConsultHours" +
+                                                    " FROM Disciplines WHERE IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
+                                                cbTeacher.Text + "') AND DisName = '" +
+                                                cbDiscipline.Text + "' AND GroupName = '" +
+                                                cbStudiesGroup.Text + "'", connection);
+                    return GetIntValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось GetExamConsultHours");
+                return 0;
+            }
+        }
+
+        // Получить количесво часов по плану для экзамена *
         private int GetExamHours()
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
@@ -505,7 +792,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
+                MessageBox.Show("Не удалось GetExamHours");
                 return 0;
             }
         }
@@ -579,6 +866,75 @@ namespace DBviewer
             }
         }
 
+        // Получить количество учтенных часов для текущих консультаций
+        private int GetCurConsultHoursComplete()
+        {
+            if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT SUM(CurConsultHours)" +
+                                                    " FROM Reports WHERE IaGakGek LIKE '%" + cbTeacher.Text + "%' AND DisName = '" +
+                                                cbDiscipline.Text + "' AND GroupName = '" +
+                                                cbStudiesGroup.Text + "'", connection);
+                    return GetIntValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось получить GetCurConsultHoursComplete");
+                return 0;
+            }
+        }
+
+        // Получить количество учтенных часов для предэкзаменационных консультаций
+        private int GetExamConsultHoursComplete()
+        {
+            if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT SUM(ExamConsultHours)" +
+                                                    " FROM Reports WHERE IaGakGek LIKE '%" + cbTeacher.Text + "%' AND DisName = '" +
+                                                cbDiscipline.Text + "' AND GroupName = '" +
+                                                cbStudiesGroup.Text + "'", connection);
+                    return GetIntValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось получить GetExamConsultHoursComplete");
+                return 0;
+            }
+        }
+
+        // Получить количество учтенных часов для зачетов
+        private int GetCreditHoursComplete()
+        {
+            if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT SUM(CreditHours)" +
+                                                    " FROM Reports WHERE IaGakGek LIKE '%" + cbTeacher.Text + "%' AND DisName = '" +
+                                                cbDiscipline.Text + "' AND GroupName = '" +
+                                                cbStudiesGroup.Text + "'", connection);
+                    return GetIntValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось получить GetCreditHoursComplete");
+                return 0;
+            }
+        }
+
         // Получить количество учтенных часов для итоговой аттестации
         private int GetFinAttestHoursComplete()
         {
@@ -631,10 +987,13 @@ namespace DBviewer
             switch (cbTypeOfActivity.Text)
             {
                 case "Лекции": return GetLectureHours();
-                case "Практика": return GetPracticeHours();
+                case "Практики": return GetPracticeHours();
                 case "Лабораторные": return GetLabHours();
-                case "Итог аттестация": return GetFinAttestHours();
-                case "Экзамен": return GetExamHours();
+                case "Тек. консульт.": return GetCurConsultHours();
+                case "Пред. экзам. консульт.": return GetExamConsultHours();
+                case "Зачеты": return GetCreditHours();
+                case "Экзамены": return GetExamHours();
+                case "Итог. аттестации": return GetFinAttestHours();
                 default: return 0;
             }
         }
@@ -645,10 +1004,13 @@ namespace DBviewer
             switch (cbTypeOfActivity.Text)
             {
                 case "Лекции": return GetLectureHoursComplete();
-                case "Практика": return GetPracticeHoursComplete();
+                case "Практики": return GetPracticeHoursComplete();
                 case "Лабораторные": return GetLabHoursComplete();
-                case "Итог аттестация": return GetFinAttestHoursComplete();
-                case "Экзамен": return GetExamHoursComplete();
+                case "Тек. консульт.": return GetCurConsultHoursComplete();
+                case "Пред. экзам. консульт.": return GetExamConsultHoursComplete();
+                case "Зачеты": return GetCreditHoursComplete();
+                case "Экзамены": return GetExamHoursComplete();
+                case "Итог. аттестации": return GetFinAttestHoursComplete();
                 default: return 0;
             }
         }
@@ -665,15 +1027,18 @@ namespace DBviewer
             switch (cbTypeOfActivity.Text)
             {
                 case "Лекции": return "LectureHours";
-                case "Практика": return "PracticeHours";
+                case "Практики": return "PracticeHours";
                 case "Лабораторные": return "LabHours";
-                case "Итог аттестация": return "FinAttestHours";
-                case "Экзамен": return "ExamHours";
+                case "Тек. консульт.": return "CurConsultHours";
+                case "Пред. экзам. консульт.": return "ExamConsultHours";
+                case "Зачеты": return "CreditHours";
+                case "Экзамены": return "ExamHours";
+                case "Итог. аттестации": return "FinAttestHours";
                 default: return "";
             }
         }
 
-        // Получение строкового значения с ведущим 0
+        // Получение строкового значения с ведущим 0 *
         private string GetStringWith0(int value)
         {
             string str = value.ToString();
@@ -681,7 +1046,7 @@ namespace DBviewer
             return str;
         }
 
-        // Заполнение элементов Combo Box Discipline
+        // Заполнение элементов Combo Box Discipline *
         private void SetDiscCBDiscipline()
         {
             try
@@ -708,11 +1073,11 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
+                MessageBox.Show("Не удалось SetDiscCBDiscipline");
             }
         }
 
-        // Заполнение элементов Combo Box StudiesGroup
+        // Заполнение элементов Combo Box StudiesGroup *
         private void SetGroupCBStudiesGroup()
         {
             try
@@ -743,7 +1108,7 @@ namespace DBviewer
             }
         }
 
-        // Заполнение элементов ComboBox TypeOfActivity
+        // Заполнение элементов ComboBox TypeOfActivity *
         private void SetActivityCBTypeOfActivity()
         {
             bool lab1 = false;
@@ -754,6 +1119,7 @@ namespace DBviewer
                 {
                     cbTypeOfActivity.Items.Clear();
                     connection.Open();
+                    // Проверка на лекции
                     CMD = new SQLiteCommand("SELECT DisName, GroupName" +
                                             " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" +
                                             cbStudiesGroup.Text + "' AND IdLector = (SELECT Id FROM Teachers WHERE FIO = '" +
@@ -763,6 +1129,7 @@ namespace DBviewer
                     adapter.Fill(table);
                     if (table.Rows.Count != 0) cbTypeOfActivity.Items.Add("Лекции");
 
+                    // Проверка на практику
                     CMD = new SQLiteCommand("SELECT DisName, GroupName" +
                                             " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" +
                                             cbStudiesGroup.Text + "' AND IdPractice = (SELECT Id FROM Teachers WHERE FIO = '" +
@@ -770,8 +1137,9 @@ namespace DBviewer
                     adapter = new SQLiteDataAdapter(CMD);
                     table = new DataTable();
                     adapter.Fill(table);
-                    if (table.Rows.Count != 0) cbTypeOfActivity.Items.Add("Практика");
+                    if (table.Rows.Count != 0) cbTypeOfActivity.Items.Add("Практики");
 
+                    // Проверка на лабораторные
                     CMD = new SQLiteCommand("SELECT DisName, GroupName" +
                                             " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" +
                                             cbStudiesGroup.Text + "' AND IdLab1 = (SELECT Id FROM Teachers WHERE FIO = '" +
@@ -792,15 +1160,10 @@ namespace DBviewer
                     
                     if (lab1 || lab2) cbTypeOfActivity.Items.Add("Лабораторные");
 
-                    CMD = new SQLiteCommand("SELECT DisName, GroupName" +
-                                            " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" +
-                                            cbStudiesGroup.Text + "' AND IdFinAttest = (SELECT Id FROM Teachers WHERE FIO = '" +
-                                            cbTeacher.Text + "')", connection);
-                    adapter = new SQLiteDataAdapter(CMD);
-                    table = new DataTable();
-                    adapter.Fill(table);
-                    if (table.Rows.Count != 0) cbTypeOfActivity.Items.Add("Итог аттестация");
+                    // Проверка на текущую консультацию
+                    if (CheckForCurConsult()) cbTypeOfActivity.Items.Add("Тек. консульт.");
 
+                    // Проверка на предэкзамениционную консультацию, зачет, экзамен
                     CMD = new SQLiteCommand("SELECT DisName, GroupName" +
                                             " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" +
                                             cbStudiesGroup.Text + "' AND IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
@@ -808,7 +1171,22 @@ namespace DBviewer
                     adapter = new SQLiteDataAdapter(CMD);
                     table = new DataTable();
                     adapter.Fill(table);
-                    if (table.Rows.Count != 0) cbTypeOfActivity.Items.Add("Экзамен");
+                    if (table.Rows.Count != 0)
+                    {
+                        cbTypeOfActivity.Items.Add("Пред. экзам. консульт.");
+                        cbTypeOfActivity.Items.Add("Зачеты");
+                        cbTypeOfActivity.Items.Add("Экзамены");
+                    }
+
+                    // Проверка на итоговую аттестацию
+                    CMD = new SQLiteCommand("SELECT DisName, GroupName" +
+                                            " FROM Disciplines WHERE DisName = '" + cbDiscipline.Text + "' AND GroupName = '" +
+                                            cbStudiesGroup.Text + "' AND IdFinAttest = (SELECT Id FROM Teachers WHERE FIO = '" +
+                                            cbTeacher.Text + "')", connection);
+                    adapter = new SQLiteDataAdapter(CMD);
+                    table = new DataTable();
+                    adapter.Fill(table);
+                    if (table.Rows.Count != 0) cbTypeOfActivity.Items.Add("Итог. аттестации");
 
                     cbTypeOfActivity.SelectedIndex = -1;
                     cbTypeOfActivity.Text = "";
@@ -820,7 +1198,7 @@ namespace DBviewer
             }
         }
 
-        // Заполнение элементов ComboBox LevelEducation
+        // Заполнение элементов ComboBox LevelEducation *
         private void SetLevelCBLevelEducation()
         {
             try
@@ -833,6 +1211,7 @@ namespace DBviewer
                                             cbStudiesGroup.Text + "' AND (IdLector = (SELECT Id FROM Teachers WHERE FIO = '" +
                                             cbTeacher.Text + "') OR IdPractice = (SELECT Id FROM Teachers WHERE FIO = '" +
                                             cbTeacher.Text + "') OR IdLab1 = (SELECT Id FROM Teachers WHERE FIO = '" +
+                                            cbTeacher.Text + "') OR IdLab2 = (SELECT Id FROM Teachers WHERE FIO = '" +
                                             cbTeacher.Text + "') OR IdFinAttest = (SELECT Id FROM Teachers WHERE FIO = '" +
                                             cbTeacher.Text + "') OR IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
                                             cbTeacher.Text + "'))", connection);
@@ -846,7 +1225,7 @@ namespace DBviewer
         }
 
         // Переход на форму отчетов
-        private void btnFillForm_Click(object sender, EventArgs e)
+        private void btnIntel_Click(object sender, EventArgs e)
         {
             lbMonth.Visible = true; cbMonth.Visible = true;
             lbYear.Visible = true; cbYear.Visible = true;
@@ -1129,6 +1508,7 @@ namespace DBviewer
         private void cbStudiesGroup_SelectedIndexChanged(object sender, EventArgs e)
         {
             tbHours.Text = "";
+            lbHours.Text = "Часы";
             SetActivityCBTypeOfActivity();
             SetLevelCBLevelEducation();
         }
@@ -1137,13 +1517,8 @@ namespace DBviewer
         private void cbTypeOfActivity_SelectedIndexChanged(object sender, EventArgs e)
         {
             tbHours.Text = "";
-            //tbHours.Text = GetLectureHours().ToString();
-            //tbHours.Text = GetPracticeHours().ToString();
-            //tbHours.Text = GetLabHours().ToString();
-            //tbHours.Text = GetFinAttestHours().ToString();
-            //tbHours.Text = GetExamHours().ToString();
             Console.WriteLine("По плану: " + GetHoursPlan() + "  Выполнено: " + GetCompleteHours());
-            lbHours.Text = "Часы(доступно: " + (GetHoursPlan() - GetCompleteHours()) + ")";
+            lbHours.Text = "Часы (доступно: " + (GetHoursPlan() - GetCompleteHours()) + ")";
         }
 
         // Обработка изменения формы обучения
@@ -1155,6 +1530,5 @@ namespace DBviewer
             }
         }
 
-        
     }
 }
