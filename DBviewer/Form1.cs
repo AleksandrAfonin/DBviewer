@@ -1417,7 +1417,7 @@ namespace DBviewer
                         totalSum += sum;
                     }
 
-                    worksheet1.Range[18, 3].Value = GetStringPayment(totalSum);
+                    worksheet1.Range[67, 3].Value = GetStringPayment(totalSum);
 
                     workbook.Save();
                 }
