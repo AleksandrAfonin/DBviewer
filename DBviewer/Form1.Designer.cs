@@ -63,6 +63,7 @@ namespace DBviewer
             this.btnSaveAdditionalInfo = new System.Windows.Forms.Button();
             this.btnBackAdditionalInfo = new System.Windows.Forms.Button();
             this.btnPrint = new System.Windows.Forms.Button();
+            this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTable)).BeginInit();
             this.SuspendLayout();
             // 
@@ -522,6 +523,7 @@ namespace DBviewer
         private System.Windows.Forms.Button btnSaveAdditionalInfo;
         private System.Windows.Forms.Button btnBackAdditionalInfo;
         private System.Windows.Forms.Button btnPrint;
+        private System.Windows.Forms.OpenFileDialog openFileDialog;
     }
 }
 

@@ -42,6 +42,26 @@ namespace DBviewer
         // При загрузке формы
         private void Form1_Load(object sender, EventArgs e)
         {
+            DirectoryInfo directory = new DirectoryInfo(Directory.GetCurrentDirectory());
+            FileInfo[] files = directory.GetFiles("*" + ".db");
+            if (files.Length != 0)
+            {
+                dataBase = files[0].FullName;
+                connectionString = "Data Source=" + dataBase + "; Version=3; FailIfMissing=True";
+            }
+            else
+            {
+                MessageBox.Show("Требуется указать базу данных");
+                if (openFileDialog.ShowDialog() == DialogResult.Cancel)
+                {
+                    Environment.Exit(0);
+                }
+
+                string fileName = openFileDialog.FileName;
+                dataBase = fileName;
+                connectionString = "Data Source=" + dataBase + "; Version=3; FailIfMissing=True";
+            }
+
             LoadDisciplinesTable();
             CreateNewColumnsIfNotExist();
             CreateTableReports();
@@ -49,10 +69,7 @@ namespace DBviewer
             CreateTableCurConsultHours();
             GeneralTable();
             FillCBTeacher();
-
-            //PrepareOfReport();
-
-            //dgvTable.DataSource = curConsultHoursTable;
+            Activate();
         }
 
         // При изменении размеров формы
@@ -78,8 +95,8 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось SELECT * FROM Disciplines LoadDisciplinesTable");
-                Application.Exit();
+                MessageBox.Show("Не то !");
+                Environment.Exit(0);
             }
         }
 
@@ -1371,8 +1388,6 @@ namespace DBviewer
                     worksheet1.Range[4, 1].Value = str4;
 
                     string str = GetStringValue(worksheet1.Range[7, 1].Text);
-
-                    Console.WriteLine(worksheet1.Range[7, 1].Text);
 
                     worksheet1.Range[7, 1].Text = "в " + GetSemestr() + str.Substring(3);
                     worksheet1.Range[8, 1].Text = "в период с «01» " + cbMonth.Text + " " + cbYear.Text +
