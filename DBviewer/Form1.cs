@@ -1,9 +1,12 @@
-﻿using System;
+﻿using Spire.Xls;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
+using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,8 +16,9 @@ namespace DBviewer
 {
     public partial class Form1 : Form
     {
-        const string dataBase = "27231685c0687995.db";
-        const string connectionString = "Data Source=" + dataBase + "; Version=3; FailIfMissing=True";
+        private static string dataBase = "27231685c0687995.db";
+        private static string connectionString = "Data Source=" + dataBase + "; Version=3; FailIfMissing=True";
+        private string templete = "template.xlsx";
 
         SQLiteConnection connection;
         SQLiteCommand CMD;
@@ -46,7 +50,7 @@ namespace DBviewer
             GeneralTable();
             FillCBTeacher();
 
-            
+            //PrepareOfReport();
 
             //dgvTable.DataSource = curConsultHoursTable;
         }
@@ -1015,10 +1019,39 @@ namespace DBviewer
             }
         }
 
+        // Получить ставку
+        private int GetRate()
+        {
+            string level;
+            if (cbStudiesForm.Text == "ВО") level = "HErate";
+            else level = "SPErate";
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT " + level + 
+                                            " FROM Teachers WHERE FIO = '" + cbTeacher.Text + "'", connection);
+                    return GetIntValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось получить GetRate");
+                return 0;
+            }
+        }
+
+        // Получить семестр (полугодие)
+        private int GetSemestr()
+        {
+            return cbMonth.SelectedIndex < 8 && cbMonth.SelectedIndex > 0 ? 2 : 1;
+        }
+
         // Получить сумму оплаты прописью
         private string GetStringPayment(int value)
         {
-            return "(" + RusNumber.Str(value) + " рублей 00 коп.)";
+            return value.ToString() + " (" + RusNumber.Str(value) + " рублей 00 коп.)";
         }
 
         // Получить имя поля для часов
@@ -1044,6 +1077,52 @@ namespace DBviewer
             string str = value.ToString();
             if (str.Length < 2) str = "0" + str;
             return str;
+        }
+
+        // Получить полное ФИО преподавателя
+        private string GetFullName()
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT FullFIO FROM Teachers WHERE FIO = '" + cbTeacher.Text + "'", connection);
+                    return GetStringValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось получить GetFullName");
+                return "";
+            }
+        }
+
+        // Получить должность преподавателя
+        private string GetTeacherPosition()
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT Position " +
+                                            " FROM Teachers WHERE FIO = '" + GetShortTeacherName() + "'", connection);
+                    return GetStringValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось получить GetTeacherPosition");
+                return "";
+            }
+        }
+
+        // Получить короткое имя преподавателя
+        private string GetShortTeacherName()
+        {
+            string sTeacher = cbTeacher.Text;
+            return sTeacher.Substring(sTeacher.IndexOf("-") + 1).Trim();
         }
 
         // Заполнение элементов Combo Box Discipline *
@@ -1224,6 +1303,134 @@ namespace DBviewer
             }
         }
 
+        // Подготовка отчета
+        private bool PrepareOfReport()
+        {
+            int[] hours = new int[14];
+            int totalSum = 0;
+            string sForm = cbStudiesForm.Text;
+            string teacherPositin = GetTeacherPosition();
+            string str4 = teacherPositin + ", " + GetFullName() + " (" + sForm + ")";
+            //string str4 = teacherPositin + " " + sForm + ", " + GetFullName() + " (" + sForm + ")";
+            int rate = GetRate();
+
+            List<string> date = new List<string>();
+            List<string> typeOfActivity = new List<string>();
+            List<string> groupName = new List<string>();
+            List<int> quantity = new List<int>();
+
+            int value;
+            foreach (DataRow dataRow in reportsTable.Rows)
+            {
+                date.Add(dataRow["Дата"].ToString());
+                groupName.Add(dataRow["Группа"].ToString());
+                for(int i = 3; i <= 10; i++)
+                {
+                    value = GetIntValue(dataRow[i]);
+                    if(value != 0)
+                    {
+                        switch (i)
+                        {
+                            case 3: typeOfActivity.Add("Лекции"); quantity.Add(value); hours[0] += value;
+                                break;
+                            case 4: typeOfActivity.Add("Практика"); quantity.Add(value); hours[2] += value;
+                                break;
+                            case 5: typeOfActivity.Add("Лаб."); quantity.Add(value); hours[1] += value;
+                                break;
+                            case 6: typeOfActivity.Add("Тек. конс."); quantity.Add(value); hours[3] += value;
+                                break;
+                            case 7: typeOfActivity.Add("Предэкзам. конс."); quantity.Add(value); hours[4] += value;
+                                break;
+                            case 8: typeOfActivity.Add("Экзамены"); quantity.Add(value); hours[5] += value;
+                                break;
+                            case 9: typeOfActivity.Add("Зачеты"); quantity.Add(value); hours[6] += value;
+                                break;
+                            case 10:
+                                string disName = dataRow["Дисциплина"].ToString();
+                                if (disName.Contains("ИА") && disName.Contains("сн") && disName.Contains("ру")) { typeOfActivity.Add(disName); quantity.Add(value); hours[7] += value; }
+                                if (disName.Contains("ИА") && disName.Contains("еце")) { typeOfActivity.Add(disName); quantity.Add(value); hours[8] += value; }
+                                if ((disName.Contains("ИА") && disName.Contains("аб")) || disName.Contains("КЭ") ||
+                                    disName.Contains("ачет")) { typeOfActivity.Add(disName); quantity.Add(value); hours[9] += value; }
+                                if (disName.Contains("ИА") && disName.Contains("орм")) { typeOfActivity.Add(disName); quantity.Add(value); hours[10] += value; }
+                                if (disName.Contains("ИА") && disName.Contains("онс")) { typeOfActivity.Add(disName); quantity.Add(value); hours[11] += value; }
+                                if (disName.Contains("ИА") && disName.Contains("ук") && disName.Contains("аф")) { typeOfActivity.Add(disName); quantity.Add(value); hours[12] += value; }
+                                if (disName.Contains("ИА") && disName.Contains("ук") && disName.Contains("сп")) { typeOfActivity.Add(disName); quantity.Add(value); hours[13] += value; }
+                                break;
+                        }
+                    }
+                }
+            }
+
+            try
+            {
+                using (Workbook workbook = new Workbook())
+                {
+                    workbook.LoadFromFile(templete);
+                    Worksheet worksheet1 = workbook.Worksheets[0];
+
+                    worksheet1.Range[4, 1].Value = str4;
+
+                    string str = GetStringValue(worksheet1.Range[7, 1].Text);
+
+                    Console.WriteLine(worksheet1.Range[7, 1].Text);
+
+                    worksheet1.Range[7, 1].Text = "в " + GetSemestr() + str.Substring(3);
+                    worksheet1.Range[8, 1].Text = "в период с «01» " + cbMonth.Text + " " + cbYear.Text +
+                        "г. по «" + cbDay.Items.Count + "» " + cbMonth.Text + " " + cbYear.Text + "г.";
+
+                    int count = 0;
+                    for (int col = 1; col < 10; col += 8)
+                {
+                    for (int row = 11; row <= 47; row++)
+                    {
+                        if (count == date.Count)
+                        {
+                            worksheet1.Range[row, col].Value = "";
+                            worksheet1.Range[row, col + 2].Value = "";
+                            worksheet1.Range[row, col + 5].Value = "";
+                            worksheet1.Range[row, col + 7].Value = "";
+                        }
+                        else
+                        {
+                            worksheet1.Range[row, col].Value = date[count];
+                            worksheet1.Range[row, col + 2].Value = typeOfActivity[count];
+                            worksheet1.Range[row, col + 5].Value = groupName[count];
+                            worksheet1.Range[row, col + 7].Value2 = quantity[count];
+                            count++;
+                        }
+                    }
+                }
+
+                    worksheet1.Range[49, 6].Value2 = quantity.Sum();
+                    
+                    worksheet1.Range[51, 4].Text = teacherPositin;
+                    worksheet1.Range[51, 13].Text = GetShortTeacherName();
+                        
+                    worksheet1.Range[53, 2].Text = DateTime.Today.ToShortDateString();
+
+                    for (int col = 3; col <= 16; col++)
+                    {
+                        worksheet1.Range[63, col].Value2 = hours[col - 3];
+                        worksheet1.Range[64, col].Value2 = rate;
+                        int sum = hours[col - 3] * rate;
+                        worksheet1.Range[65, col].Value2 = sum;
+                        totalSum += sum;
+                    }
+
+                    worksheet1.Range[18, 3].Value = GetStringPayment(totalSum);
+
+                    workbook.Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Закройте файл шаблона отчета и повторите попытку" + ex);
+                return false;
+            }
+
+            return true;
+        }
+
         // Переход на форму отчетов
         private void btnIntel_Click(object sender, EventArgs e)
         {
@@ -1234,6 +1441,7 @@ namespace DBviewer
             btnIntel.Visible = false; btnBackGeneral.Visible = true;
             btnInput.Visible = true; btnPaid.Visible = true;
             btnViewAll.Visible = true; btnAdditionalInfo.Visible = false;
+            btnPrint.Visible = true;
 
             cbMonth.SelectedIndex = DateTime.Today.Month - 1;
             cbYear.SelectedItem = DateTime.Today.Year.ToString();
@@ -1253,6 +1461,7 @@ namespace DBviewer
             btnIntel.Visible = true; btnBackGeneral.Visible = false;
             btnInput.Visible = false; btnPaid.Visible = false;
             btnViewAll.Visible = false; btnAdditionalInfo.Visible = true;
+            btnPrint.Visible = false;
 
             cbTeacher.SelectedIndex = -1;
 
@@ -1316,6 +1525,7 @@ namespace DBviewer
             tbHours.Visible = true; lbHours.Visible = true;
             cbLevelEducation.Visible = true; lbLevelEducation.Visible = true;
             cbHalfYear.Visible = true; lbHalfYear.Visible = true;
+            btnPrint.Visible = false;
 
             isInput = true;
             tbHours.Text = "";
@@ -1337,6 +1547,7 @@ namespace DBviewer
             tbHours.Visible = false; lbHours.Visible = false;
             cbLevelEducation.Visible = false; lbLevelEducation.Visible = false;
             cbHalfYear.Visible = false; lbHalfYear.Visible = false;
+            btnPrint.Visible = true;
 
             cbTeacher.SelectedIndex = -1;
 
@@ -1379,7 +1590,7 @@ namespace DBviewer
                         CMD = new SQLiteCommand("INSERT INTO Reports (DisName, GroupName, " + GetFieldName() +
                                     ", TotalHours, Date, IaGakGek) VALUES ('" + cbDiscipline.Text + "', '" +
                                     cbStudiesGroup.Text + "', " + hours + ", " + hours +
-                                    ", '" + GetStringWith0(cbDay.SelectedIndex + 1) + "." + GetStringWith0(cbMonth.SelectedIndex + 1) + "." + cbYear.Text.Remove(0, 2) +
+                                    ", '" + GetStringWith0(cbDay.SelectedIndex + 1) + "." + GetStringWith0(cbMonth.SelectedIndex + 1) + "." + cbYear.Text +
                                     "', '" + GetStringWith0(cbMonth.SelectedIndex + 1) + cbYear.Text + cbTeacher.Text + cbLevelEducation.Text +
                                     "')", connection);
                         CMD.ExecuteNonQuery();
@@ -1466,7 +1677,6 @@ namespace DBviewer
         private void cbMonth_SelectedIndexChanged(object sender, EventArgs e)
         {
             DaysInMonth();
-            cbHalfYear.SelectedIndex = cbMonth.SelectedIndex < 8 && cbMonth.SelectedIndex > 0 ? 1 : 0;
             if (!isInput)
             {
                 LoadTableReportsWithArguments();
@@ -1530,5 +1740,27 @@ namespace DBviewer
             }
         }
 
+        private void btnPrint_Click(object sender, EventArgs e)
+        {
+            if (cbTeacher.SelectedIndex == -1)
+            {
+                MessageBox.Show("Нет преподавателя !");
+                return;
+            }
+
+            if (reportsTable.Rows.Count == 0)
+            {
+                MessageBox.Show("Нечего печатать !");
+                return;
+            }
+
+            if(!PrepareOfReport()) return;
+
+            using (Workbook workbook = new Workbook())
+            {
+                workbook.LoadFromFile(templete);
+                workbook.PrintDocument.Print();
+            }
+        }
     }
 }

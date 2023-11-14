@@ -62,6 +62,7 @@ namespace DBviewer
             this.btnAdditionalInfo = new System.Windows.Forms.Button();
             this.btnSaveAdditionalInfo = new System.Windows.Forms.Button();
             this.btnBackAdditionalInfo = new System.Windows.Forms.Button();
+            this.btnPrint = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTable)).BeginInit();
             this.SuspendLayout();
             // 
@@ -425,11 +426,23 @@ namespace DBviewer
             this.btnBackAdditionalInfo.Visible = false;
             this.btnBackAdditionalInfo.Click += new System.EventHandler(this.btnBackAdditionalInfo_Click);
             // 
+            // btnPrint
+            // 
+            this.btnPrint.Location = new System.Drawing.Point(613, 52);
+            this.btnPrint.Name = "btnPrint";
+            this.btnPrint.Size = new System.Drawing.Size(75, 23);
+            this.btnPrint.TabIndex = 33;
+            this.btnPrint.Text = "Печать";
+            this.btnPrint.UseVisualStyleBackColor = true;
+            this.btnPrint.Visible = false;
+            this.btnPrint.Click += new System.EventHandler(this.btnPrint_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1016, 534);
+            this.Controls.Add(this.btnPrint);
             this.Controls.Add(this.btnBackAdditionalInfo);
             this.Controls.Add(this.btnSaveAdditionalInfo);
             this.Controls.Add(this.btnAdditionalInfo);
@@ -508,6 +521,7 @@ namespace DBviewer
         private System.Windows.Forms.Button btnAdditionalInfo;
         private System.Windows.Forms.Button btnSaveAdditionalInfo;
         private System.Windows.Forms.Button btnBackAdditionalInfo;
+        private System.Windows.Forms.Button btnPrint;
     }
 }
 
