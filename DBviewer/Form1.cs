@@ -19,6 +19,7 @@ namespace DBviewer
         private static string dataBase = "27231685c0687995.db";
         private static string connectionString = "Data Source=" + dataBase + "; Version=3; FailIfMissing=True";
         private string templete = "template.xlsx";
+        private string psw = "admin";
 
         SQLiteConnection connection;
         SQLiteCommand CMD;
@@ -115,8 +116,8 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось SELECT * FROM Disciplines");
-                //Application.Exit();
+                MessageBox.Show("Нет таблицы 'Teachers'");
+                Environment.Exit(0);
             }
         }
 
@@ -134,7 +135,7 @@ namespace DBviewer
                     adapter.Fill(table);
                 }
             }
-            catch (SQLiteException ex)
+            catch (SQLiteException)
             {
                 try
                 {
@@ -145,12 +146,10 @@ namespace DBviewer
                         CMD.ExecuteNonQuery();
                     }
                 }
-                catch (SQLiteException e)
+                catch (SQLiteException)
                 {
-                    MessageBox.Show("Не удалось добавить столбец FullFIO" + e);
+                    MessageBox.Show("Не удалось добавить столбец FullFIO");
                 }
-
-                MessageBox.Show("Не удалось SELECT FullFIO FROM Teachers " + ex);
             }
 
             try
@@ -164,7 +163,7 @@ namespace DBviewer
                     adapter.Fill(table);
                 }
             }
-            catch (SQLiteException ex)
+            catch (SQLiteException)
             {
                 try
                 {
@@ -175,12 +174,10 @@ namespace DBviewer
                         CMD.ExecuteNonQuery();
                     }
                 }
-                catch (SQLiteException e)
+                catch (SQLiteException)
                 {
-                    MessageBox.Show("Не удалось добавить столбец HErate" + e);
+                    MessageBox.Show("Не удалось добавить столбец HErate");
                 }
-
-                MessageBox.Show("Не удалось SELECT HErate FROM Teachers " + ex);
             }
 
             try
@@ -194,7 +191,7 @@ namespace DBviewer
                     adapter.Fill(table);
                 }
             }
-            catch (SQLiteException ex)
+            catch (SQLiteException)
             {
                 try
                 {
@@ -205,12 +202,10 @@ namespace DBviewer
                         CMD.ExecuteNonQuery();
                     }
                 }
-                catch (SQLiteException e)
+                catch (SQLiteException)
                 {
-                    MessageBox.Show("Не удалось добавить столбец SPErate" + e);
+                    MessageBox.Show("Не удалось добавить столбец SPErate");
                 }
-
-                MessageBox.Show("Не удалось SELECT SPErate FROM Teachers " + ex);
             }
         }
 
@@ -328,7 +323,7 @@ namespace DBviewer
                 }
                 catch (SQLiteException)
                 {
-                    MessageBox.Show("Не удалось FIO Teachers");
+                    MessageBox.Show("Не удалось получить данные");
                 }
 
                 DataRow tableRow = curConsultHoursTable.NewRow();
@@ -385,8 +380,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось GeneralTable");
-                //Application.Exit();
+                MessageBox.Show("Не удалось создать табличные данные");
             }
         }
 
@@ -524,7 +518,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось CreateTableReports");
+                MessageBox.Show("Не удалось создать таблицу отчетов");
             }
         }
 
@@ -547,7 +541,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось Load Table Reports");
+                MessageBox.Show("Не удалось загрузить данные отчетов");
             }
         }
 
@@ -572,8 +566,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Load Table Reports With Arguments");
-                Application.Exit();
+                MessageBox.Show("Не удалось загрузить данные отчетов");
             }
         }
 
@@ -597,8 +590,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
-                Application.Exit();
+                MessageBox.Show("Не удалось получить ФИО преподавателей");
             }
         }
 
@@ -634,9 +626,8 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось GetLectureHours");
+                MessageBox.Show("Не удалось получить часы лекций");
                 return 0;
-                //Application.Exit();
             }
         }
 
@@ -659,9 +650,8 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось GetPracticeHours");
+                MessageBox.Show("Не удалось получить часы практик");
                 return 0;
-                //Application.Exit();
             }
         }
 
@@ -695,9 +685,8 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось GetLabHours");
+                MessageBox.Show("Не удалось получить часы лабораторных");
                 return 0;
-                //Application.Exit();
             }
         }
 
@@ -720,7 +709,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось GetFinAttestHours");
+                MessageBox.Show("Не удалось получить часы финальных аттестаций");
                 return 0;
             }
         }
@@ -765,7 +754,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось GetCreditHours");
+                MessageBox.Show("Не удалось получить часы зачетов");
                 return 0;
             }
         }
@@ -789,7 +778,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось GetExamConsultHours");
+                MessageBox.Show("Не удалось получить часы предэкзаменационных консультаций");
                 return 0;
             }
         }
@@ -813,7 +802,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось GetExamHours");
+                MessageBox.Show("Не удалось получить экзаменационных часов");
                 return 0;
             }
         }
@@ -836,7 +825,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить LectureHoursComplete");
+                MessageBox.Show("Не удалось получить выполненные часы лекций");
                 return 0;
             }
         }
@@ -859,7 +848,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить PracticeHoursComplete");
+                MessageBox.Show("Не удалось получить выполненные часы практик");
                 return 0;
             }
         }
@@ -882,7 +871,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить LabHoursComplete");
+                MessageBox.Show("Не удалось получить выполненные часы лабораторных");
                 return 0;
             }
         }
@@ -905,7 +894,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить GetCurConsultHoursComplete");
+                MessageBox.Show("Не удалось получить выполненные часы текущих консультаций");
                 return 0;
             }
         }
@@ -928,7 +917,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить GetExamConsultHoursComplete");
+                MessageBox.Show("Не удалось получить выполненные часы предэкзаменационных консультаций");
                 return 0;
             }
         }
@@ -951,7 +940,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить GetCreditHoursComplete");
+                MessageBox.Show("Не удалось получить выполненные часы зачетов");
                 return 0;
             }
         }
@@ -974,7 +963,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить FinAttestHoursComplete");
+                MessageBox.Show("Не удалось получить выполненные часы финальных аттестаций");
                 return 0;
             }
         }
@@ -997,7 +986,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить ExamHoursComplete");
+                MessageBox.Show("Не удалось получить выполненные часы экзаменов");
                 return 0;
             }
         }
@@ -1054,7 +1043,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить GetRate");
+                MessageBox.Show("Не удалось получить ставку");
                 return 0;
             }
         }
@@ -1110,7 +1099,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить GetFullName");
+                MessageBox.Show("Не удалось получить полное имя преподавателя");
                 return "";
             }
         }
@@ -1130,7 +1119,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить GetTeacherPosition");
+                MessageBox.Show("Не удалось получить должность преподавателя");
                 return "";
             }
         }
@@ -1169,7 +1158,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось SetDiscCBDiscipline");
+                MessageBox.Show("Не удалось получить дисциплины");
             }
         }
 
@@ -1200,7 +1189,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось SetGroupCBStudiesGroup");
+                MessageBox.Show("Не удалось получить группы");
             }
         }
 
@@ -1290,7 +1279,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
+                MessageBox.Show("Не удалось получить виды занятий");
             }
         }
 
@@ -1311,13 +1300,20 @@ namespace DBviewer
                                             cbTeacher.Text + "') OR IdFinAttest = (SELECT Id FROM Teachers WHERE FIO = '" +
                                             cbTeacher.Text + "') OR IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
                                             cbTeacher.Text + "'))", connection);
-                    cbLevelEducation.Text = GetStringValue(CMD.ExecuteScalar());
+                    tbLevelEducation.Text = GetStringValue(CMD.ExecuteScalar());
                 }
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось подключиться к БД");
+                MessageBox.Show("Не удалось получить уровень образования");
             }
+        }
+
+        // Установка визуализации отдельных элементов
+        private void SetVisiblePay()
+        {
+            btnPaid.Visible = true; lbPassword.Visible = false; tbPassword.Visible = false;
+            btnOK.Visible = false;
         }
 
         // Подготовка отчета
@@ -1328,7 +1324,6 @@ namespace DBviewer
             string sForm = cbStudiesForm.Text;
             string teacherPositin = GetTeacherPosition();
             string str4 = teacherPositin + ", " + GetFullName() + " (" + sForm + ")";
-            //string str4 = teacherPositin + " " + sForm + ", " + GetFullName() + " (" + sForm + ")";
             int rate = GetRate();
 
             List<string> date = new List<string>();
@@ -1437,73 +1432,19 @@ namespace DBviewer
                     workbook.Save();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MessageBox.Show("Закройте файл шаблона отчета и повторите попытку" + ex);
+                MessageBox.Show("Закройте файл шаблона отчета и повторите попытку");
                 return false;
             }
 
             return true;
         }
 
-        // Переход на форму отчетов
-        private void btnIntel_Click(object sender, EventArgs e)
+        // Пометить оплату
+        private void MarkPay()
         {
-            lbMonth.Visible = true; cbMonth.Visible = true;
-            lbYear.Visible = true; cbYear.Visible = true;
-            lbStadiesForm.Visible = true; cbStudiesForm.Visible = true;
-            lbTeacher.Visible = true; cbTeacher.Visible = true;
-            btnIntel.Visible = false; btnBackGeneral.Visible = true;
-            btnInput.Visible = true; btnPaid.Visible = true;
-            btnViewAll.Visible = true; btnAdditionalInfo.Visible = false;
-            btnPrint.Visible = true;
-
-            cbMonth.SelectedIndex = DateTime.Today.Month - 1;
-            cbYear.SelectedItem = DateTime.Today.Year.ToString();
-            cbStudiesForm.SelectedIndex = 0;
-
-            LoadTableReports();
-            dgvTable.DataSource = reportsTable;
-        }
-
-        // Возврат на общую форму из формы отчетов
-        private void btnBackGeneral_Click(object sender, EventArgs e)
-        {
-            lbMonth.Visible = false; cbMonth.Visible = false;
-            lbYear.Visible = false; cbYear.Visible = false;
-            lbStadiesForm.Visible = false; cbStudiesForm.Visible = false;
-            lbTeacher.Visible = false; cbTeacher.Visible = false;
-            btnIntel.Visible = true; btnBackGeneral.Visible = false;
-            btnInput.Visible = false; btnPaid.Visible = false;
-            btnViewAll.Visible = false; btnAdditionalInfo.Visible = true;
-            btnPrint.Visible = false;
-
-            cbTeacher.SelectedIndex = -1;
-
-            dgvTable.DataSource = generalTable;
-        }
-
-        // Показать весь Report
-        private void btnViewAll_Click(object sender, EventArgs e)
-        {
-            cbTeacher.SelectedIndex = -1;
-            LoadTableReports();
-        }
-
-        // Пометка оплаты 
-        private void btnPaid_Click(object sender, EventArgs e)
-        {
-            if (reportsTable.Rows.Count == 0)
-            {
-                MessageBox.Show("Нечего оплачивать.");
-                return;
-            }
-
-            if (cbTeacher.SelectedIndex == -1)
-            {
-                MessageBox.Show("Преподаватель не выбран.");
-                return;
-            }
+            if (reportsTable.Rows.Count == 0) return;
 
             try
             {
@@ -1527,9 +1468,80 @@ namespace DBviewer
             }
         }
 
+        // Переход на форму отчетов
+        private void btnIntel_Click(object sender, EventArgs e)
+        {
+            lbGeneralIntel.Visible = false; lbIntelHours.Visible = true;
+            lbMonth.Visible = true; cbMonth.Visible = true;
+            lbYear.Visible = true; cbYear.Visible = true;
+            lbStadiesForm.Visible = true; cbStudiesForm.Visible = true;
+            lbTeacher.Visible = true; cbTeacher.Visible = true;
+            btnIntel.Visible = false; btnBackGeneral.Visible = true;
+            btnInput.Visible = true; btnPaid.Visible = true;
+            btnViewAll.Visible = true; btnAdditionalInfo.Visible = false;
+            btnPrint.Visible = true; 
+
+            cbMonth.SelectedIndex = DateTime.Today.Month - 1;
+            cbYear.SelectedItem = DateTime.Today.Year.ToString();
+            cbStudiesForm.SelectedIndex = 0;
+
+            LoadTableReports();
+            dgvTable.DataSource = reportsTable;
+        }
+
+        // Возврат на общую форму из формы отчетов
+        private void btnBackGeneral_Click(object sender, EventArgs e)
+        {
+            SetVisiblePay();
+            lbGeneralIntel.Visible = true; lbIntelHours.Visible = false;
+            lbMonth.Visible = false; cbMonth.Visible = false;
+            lbYear.Visible = false; cbYear.Visible = false;
+            lbStadiesForm.Visible = false; cbStudiesForm.Visible = false;
+            lbTeacher.Visible = false; cbTeacher.Visible = false;
+            btnIntel.Visible = true; btnBackGeneral.Visible = false;
+            btnInput.Visible = false; btnPaid.Visible = false;
+            btnViewAll.Visible = false; btnAdditionalInfo.Visible = true;
+            btnPrint.Visible = false;
+
+            cbTeacher.SelectedIndex = -1;
+
+            dgvTable.DataSource = generalTable;
+        }
+
+        // Показать весь Report
+        private void btnViewAll_Click(object sender, EventArgs e)
+        {
+            SetVisiblePay();
+
+            cbTeacher.SelectedIndex = -1;
+            LoadTableReports();
+        }
+
+        // Пометка оплаты 
+        private void btnPaid_Click(object sender, EventArgs e)
+        {
+            if (reportsTable.Rows.Count == 0)
+            {
+                MessageBox.Show("Нечего оплачивать.");
+                return;
+            }
+
+            if (cbTeacher.SelectedIndex == -1)
+            {
+                MessageBox.Show("Преподаватель не выбран.");
+                return;
+            }
+
+            tbPassword.Text = "";
+            btnPaid.Visible = false; lbPassword.Visible = true; tbPassword.Visible = true;
+            btnOK.Visible = true;
+            tbPassword.Focus();
+        }
+
         // Переход на форму ввода проведенных часов
         private void btnInput_Click(object sender, EventArgs e)
         {
+            SetVisiblePay();
             btnBackReports.Visible = true; btnBackGeneral.Visible = false; btnInput.Visible = false;
             cbStudiesForm.Visible = false; lbStadiesForm.Visible = false; btnPaid.Visible = false;
             btnViewAll.Visible = false; btnEnter.Visible = true;
@@ -1538,14 +1550,13 @@ namespace DBviewer
             cbStudiesGroup.Visible = true; lbStudiesGroup.Visible = true;
             cbTypeOfActivity.Visible = true; lbTypeOfActivity.Visible = true;
             tbHours.Visible = true; lbHours.Visible = true;
-            cbLevelEducation.Visible = true; lbLevelEducation.Visible = true;
-            cbHalfYear.Visible = true; lbHalfYear.Visible = true;
+            tbLevelEducation.Visible = true; lbLevelEducation.Visible = true;
+            lbIntelHours.Visible = false; lbEnterIntel.Visible = true;
             btnPrint.Visible = false;
 
             isInput = true;
             tbHours.Text = "";
             cbTeacher.SelectedIndex = -1;
-            cbHalfYear.SelectedIndex = cbMonth.SelectedIndex > 6 && cbMonth.SelectedIndex < 12 ? 0 : 1;
             DaysInMonth();
         }
 
@@ -1560,8 +1571,8 @@ namespace DBviewer
             cbStudiesGroup.Visible = false; lbStudiesGroup.Visible = false;
             cbTypeOfActivity.Visible = false; lbTypeOfActivity.Visible = false;
             tbHours.Visible = false; lbHours.Visible = false;
-            cbLevelEducation.Visible = false; lbLevelEducation.Visible = false;
-            cbHalfYear.Visible = false; lbHalfYear.Visible = false;
+            tbLevelEducation.Visible = false; lbLevelEducation.Visible = false;
+            lbIntelHours.Visible = true; lbEnterIntel.Visible = false;
             btnPrint.Visible = true;
 
             cbTeacher.SelectedIndex = -1;
@@ -1606,25 +1617,29 @@ namespace DBviewer
                                     ", TotalHours, Date, IaGakGek) VALUES ('" + cbDiscipline.Text + "', '" +
                                     cbStudiesGroup.Text + "', " + hours + ", " + hours +
                                     ", '" + GetStringWith0(cbDay.SelectedIndex + 1) + "." + GetStringWith0(cbMonth.SelectedIndex + 1) + "." + cbYear.Text +
-                                    "', '" + GetStringWith0(cbMonth.SelectedIndex + 1) + cbYear.Text + cbTeacher.Text + cbLevelEducation.Text +
+                                    "', '" + GetStringWith0(cbMonth.SelectedIndex + 1) + cbYear.Text + cbTeacher.Text + tbLevelEducation.Text +
                                     "')", connection);
                         CMD.ExecuteNonQuery();
                         LoadTableReports();
                         dgvTable.DataSource = reportsTable;
                     }
                     MessageBox.Show("Данные успешно внесены.");
-                    cbTypeOfActivity.SelectedIndex = -1;
+                    
                 }
                 catch (SQLiteException ex)
                 {
                     MessageBox.Show("Вылет в INSERTe: " + ex);
                 }
+
+                cbTypeOfActivity.SelectedIndex = -1;
+                lbHours.Text = "Часы";
             }
         }
 
         // Ввод дополнительной информации о преподавателях
         private void btnAdditionalInfo_Click(object sender, EventArgs e)
         {
+            lbGeneralIntel.Visible = false; lbAdditionalInfo.Visible = true;
             btnSaveAdditionalInfo.Visible = true; btnBackAdditionalInfo.Visible = true;
             btnAdditionalInfo.Visible = false; btnIntel.Visible = false;
 
@@ -1634,7 +1649,7 @@ namespace DBviewer
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT Id, FIO AS Преподаватель, FullFIO AS 'Полное ФИО', HErate AS 'Ставка ВО', SPErate AS 'Ставка СПО'" +
-                        " FROM Teachers WHERE FIO LIKE '%Почасов%'", connection);
+                        " FROM Teachers WHERE FIO LIKE '%очасов%'", connection);
                     adapter = new SQLiteDataAdapter(CMD);
                     DataTable table = new DataTable();
                     adapter.Fill(table);
@@ -1645,7 +1660,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось btnAdditionalInfo_Click");
+                MessageBox.Show("Не удалось получить ФИО преподавателей");
             }
         }
 
@@ -1654,6 +1669,7 @@ namespace DBviewer
         {
             btnSaveAdditionalInfo.Visible = false; btnBackAdditionalInfo.Visible = false;
             btnAdditionalInfo.Visible = true; btnIntel.Visible = true;
+            lbAdditionalInfo.Visible = false; lbGeneralIntel.Visible = true;
 
             dgvTable.DataSource = generalTable; dgvTable.ReadOnly = true;
         }
@@ -1675,7 +1691,7 @@ namespace DBviewer
                         CMD.ExecuteNonQuery();
                     }
                 }
-                MessageBox.Show("Данные успешно внесены.");
+                MessageBox.Show("Данные успешно сохранены.");
             }
             catch (SQLiteException)
             {
@@ -1684,6 +1700,7 @@ namespace DBviewer
 
             btnSaveAdditionalInfo.Visible = false; btnBackAdditionalInfo.Visible = false;
             btnAdditionalInfo.Visible = true; btnIntel.Visible = true;
+            lbAdditionalInfo.Visible = false; lbGeneralIntel.Visible = true;
 
             dgvTable.DataSource = generalTable; dgvTable.ReadOnly = true;
         }
@@ -1741,8 +1758,7 @@ namespace DBviewer
         // Обработка изменения вида занятий
         private void cbTypeOfActivity_SelectedIndexChanged(object sender, EventArgs e)
         {
-            tbHours.Text = "";
-            Console.WriteLine("По плану: " + GetHoursPlan() + "  Выполнено: " + GetCompleteHours());
+            tbHours.Text = "";Console.WriteLine("По плану: " + GetHoursPlan() + "  Выполнено: " + GetCompleteHours());
             lbHours.Text = "Часы (доступно: " + (GetHoursPlan() - GetCompleteHours()) + ")";
         }
 
@@ -1755,8 +1771,11 @@ namespace DBviewer
             }
         }
 
+        // Обработка печати
         private void btnPrint_Click(object sender, EventArgs e)
         {
+            SetVisiblePay();
+
             if (cbTeacher.SelectedIndex == -1)
             {
                 MessageBox.Show("Нет преподавателя !");
@@ -1775,6 +1794,23 @@ namespace DBviewer
             {
                 workbook.LoadFromFile(templete);
                 workbook.PrintDocument.Print();
+            }
+
+            MessageBox.Show("Документ отправлен на печать");
+        }
+
+        // Обработка оплаты
+        private void btnOK_Click(object sender, EventArgs e)
+        {
+            SetVisiblePay();
+
+            if (tbPassword.Text == psw)
+            {
+                MarkPay();
+            }
+            else
+            {
+                MessageBox.Show("Не угадал )");
             }
         }
     }
