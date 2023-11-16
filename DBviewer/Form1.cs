@@ -616,7 +616,7 @@ namespace DBviewer
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT LectureHours" +
+                    CMD = new SQLiteCommand("SELECT SUM(LectureHours)" +
                                                     " FROM Disciplines WHERE IdLector = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') AND DisName = '" +
                                                 cbDiscipline.Text + "' AND GroupName = '" +
@@ -640,7 +640,7 @@ namespace DBviewer
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT PracticeHours" +
+                    CMD = new SQLiteCommand("SELECT SUM(PracticeHours)" +
                                                     " FROM Disciplines WHERE IdPractice = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') AND DisName = '" +
                                                 cbDiscipline.Text + "' AND GroupName = '" +
@@ -659,35 +659,35 @@ namespace DBviewer
         private int GetLabHours()
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
-            int hoursLab1, hoursLab2;
+            int idTeacher;
+            string disName = cbDiscipline.Text, stGroup = cbStudiesGroup.Text;
             try
             {
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT LabHours" +
-                                                    " FROM Disciplines WHERE IdLab1 = (SELECT Id FROM Teachers WHERE FIO = '" +
-                                                cbTeacher.Text + "') AND DisName = '" +
-                                                cbDiscipline.Text + "' AND GroupName = '" +
-                                                cbStudiesGroup.Text + "'", connection);
-                    hoursLab1 = GetIntValue(CMD.ExecuteScalar());
-
-                    CMD = new SQLiteCommand("SELECT LabHours" +
-                                                    " FROM Disciplines WHERE IdLab2 = (SELECT Id FROM Teachers WHERE FIO = '" +
-                                                cbTeacher.Text + "') AND DisName = '" +
-                                                cbDiscipline.Text + "' AND GroupName = '" +
-                                                cbStudiesGroup.Text + "'", connection);
-                    hoursLab2 = GetIntValue(CMD.ExecuteScalar());
+                    CMD = new SQLiteCommand("SELECT Id FROM Teachers WHERE FIO = '" + cbTeacher.Text + "'", connection);
+                    idTeacher = GetIntValue(CMD.ExecuteScalar());
                 }
-
-                if (hoursLab1 == hoursLab2) return hoursLab1;
-                else return Math.Max(hoursLab1, hoursLab2) / 2;
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить часы лабораторных");
+                MessageBox.Show("Не удалось получить Id преподавателя");
                 return 0;
             }
+
+            int sumLabHours = 0;
+            foreach (DataRow disRow in disciplinesTable.Rows)
+            {
+                if (GetStringValue(disRow["DisName"]) == disName && GetStringValue(disRow["GroupName"]) == stGroup)
+                {
+                    if (GetIntValue(disRow["IdLab1"]) == idTeacher && GetIntValue(disRow["IdLab2"]) == idTeacher) sumLabHours += GetIntValue(disRow["LabHours"]);
+                    if ((GetIntValue(disRow["IdLab1"]) == idTeacher && GetIntValue(disRow["IdLab2"]) != idTeacher) ||
+                        (GetIntValue(disRow["IdLab1"]) != idTeacher && GetIntValue(disRow["IdLab2"]) == idTeacher)) sumLabHours += (GetIntValue(disRow["LabHours"]) / 2);
+                }
+            }
+
+            return sumLabHours;
         }
 
         // Получить количесво часов по плану для аттестации *
@@ -699,7 +699,7 @@ namespace DBviewer
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT FinAttestHours" +
+                    CMD = new SQLiteCommand("SELECT SUM(FinAttestHours)" +
                                                     " FROM Disciplines WHERE IdFinAttest = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') AND DisName = '" +
                                                 cbDiscipline.Text + "' AND GroupName = '" +
@@ -744,7 +744,7 @@ namespace DBviewer
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT CreditHours" +
+                    CMD = new SQLiteCommand("SELECT SUM(CreditHours)" +
                                                     " FROM Disciplines WHERE IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') AND DisName = '" +
                                                 cbDiscipline.Text + "' AND GroupName = '" +
@@ -768,7 +768,7 @@ namespace DBviewer
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT ExamConsultHours" +
+                    CMD = new SQLiteCommand("SELECT SUM(ExamConsultHours)" +
                                                     " FROM Disciplines WHERE IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') AND DisName = '" +
                                                 cbDiscipline.Text + "' AND GroupName = '" +
@@ -792,7 +792,7 @@ namespace DBviewer
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT ExamHours" +
+                    CMD = new SQLiteCommand("SELECT SUM(ExamHours)" +
                                                     " FROM Disciplines WHERE IdExam = (SELECT Id FROM Teachers WHERE FIO = '" +
                                                 cbTeacher.Text + "') AND DisName = '" +
                                                 cbDiscipline.Text + "' AND GroupName = '" +
@@ -1430,7 +1430,7 @@ namespace DBviewer
                     worksheet1.Range[67, 3].Value = GetStringPayment(totalSum);
 
                     workbook.Save();
-                    workbook.SaveToFile((GetShortTeacherName() + "_" + cbMonth.Text + "_" + cbYear.Text).Replace(".", "_").Replace(" ", "_") + ".xlsx");
+                    workbook.SaveToFile((GetShortTeacherName() + "_" + cbStudiesForm.Text + "_" + cbMonth.Text + "_" + cbYear.Text).Replace(".", "_").Replace(" ", "_") + ".xlsx");
                 }
             }
             catch (Exception)
@@ -1624,8 +1624,9 @@ namespace DBviewer
                         LoadTableReports();
                         dgvTable.DataSource = reportsTable;
                     }
+
+                    FillGeneralTable();
                     MessageBox.Show("Данные успешно внесены.");
-                    
                 }
                 catch (SQLiteException ex)
                 {
@@ -1759,7 +1760,8 @@ namespace DBviewer
         // Обработка изменения вида занятий
         private void cbTypeOfActivity_SelectedIndexChanged(object sender, EventArgs e)
         {
-            tbHours.Text = "";Console.WriteLine("По плану: " + GetHoursPlan() + "  Выполнено: " + GetCompleteHours());
+            tbHours.Text = "";
+            //Console.WriteLine("По плану: " + GetHoursPlan() + "  Выполнено: " + GetCompleteHours());
             lbHours.Text = "Часы (доступно: " + (GetHoursPlan() - GetCompleteHours()) + ")";
         }
 
