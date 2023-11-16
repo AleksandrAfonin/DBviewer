@@ -71,6 +71,7 @@ namespace DBviewer
             this.btnOK = new System.Windows.Forms.Button();
             this.tbLevelEducation = new System.Windows.Forms.TextBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.printDialog = new System.Windows.Forms.PrintDialog();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTable)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -79,7 +80,7 @@ namespace DBviewer
             // 
             this.dgvTable.AllowUserToAddRows = false;
             this.dgvTable.AllowUserToDeleteRows = false;
-            this.dgvTable.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
+            this.dgvTable.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvTable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvTable.Location = new System.Drawing.Point(12, 115);
             this.dgvTable.Name = "dgvTable";
@@ -193,7 +194,7 @@ namespace DBviewer
             "октябрь",
             "ноябрь",
             "декабрь"});
-            this.cbMonth.Location = new System.Drawing.Point(224, 88);
+            this.cbMonth.Location = new System.Drawing.Point(226, 88);
             this.cbMonth.Name = "cbMonth";
             this.cbMonth.Size = new System.Drawing.Size(72, 21);
             this.cbMonth.TabIndex = 10;
@@ -241,7 +242,7 @@ namespace DBviewer
             "2027"});
             this.cbYear.Location = new System.Drawing.Point(171, 88);
             this.cbYear.Name = "cbYear";
-            this.cbYear.Size = new System.Drawing.Size(47, 21);
+            this.cbYear.Size = new System.Drawing.Size(49, 21);
             this.cbYear.TabIndex = 14;
             this.cbYear.Visible = false;
             this.cbYear.SelectedIndexChanged += new System.EventHandler(this.cbYear_SelectedIndexChanged);
@@ -252,9 +253,9 @@ namespace DBviewer
             this.cbStudiesForm.Items.AddRange(new object[] {
             "ВО",
             "СПО"});
-            this.cbStudiesForm.Location = new System.Drawing.Point(302, 88);
+            this.cbStudiesForm.Location = new System.Drawing.Point(304, 88);
             this.cbStudiesForm.Name = "cbStudiesForm";
-            this.cbStudiesForm.Size = new System.Drawing.Size(120, 21);
+            this.cbStudiesForm.Size = new System.Drawing.Size(118, 21);
             this.cbStudiesForm.TabIndex = 15;
             this.cbStudiesForm.Visible = false;
             this.cbStudiesForm.SelectedIndexChanged += new System.EventHandler(this.cbStudiesForm_SelectedIndexChanged);
@@ -305,11 +306,12 @@ namespace DBviewer
             // cbDay
             // 
             this.cbDay.FormattingEnabled = true;
-            this.cbDay.Location = new System.Drawing.Point(302, 88);
+            this.cbDay.Location = new System.Drawing.Point(304, 88);
             this.cbDay.Name = "cbDay";
-            this.cbDay.Size = new System.Drawing.Size(54, 21);
+            this.cbDay.Size = new System.Drawing.Size(52, 21);
             this.cbDay.TabIndex = 23;
             this.cbDay.Visible = false;
+            this.cbDay.SelectedIndexChanged += new System.EventHandler(this.cbDay_SelectedIndexChanged);
             // 
             // lbDay
             // 
@@ -512,6 +514,10 @@ namespace DBviewer
             this.pictureBox1.TabIndex = 34;
             this.pictureBox1.TabStop = false;
             // 
+            // printDialog
+            // 
+            this.printDialog.UseEXDialog = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -613,6 +619,7 @@ namespace DBviewer
         private System.Windows.Forms.Label lbPassword;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.TextBox tbLevelEducation;
+        private System.Windows.Forms.PrintDialog printDialog;
     }
 }
 

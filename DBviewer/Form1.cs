@@ -376,7 +376,7 @@ namespace DBviewer
                     generalTable.Columns.Add("Объем нагрузки", typeof(Int32));
                 }
                 FillGeneralTable();
-                dgvTable.DataSource = generalTable;
+                PlacedGeneralTable();
             }
             catch (SQLiteException)
             {
@@ -384,6 +384,15 @@ namespace DBviewer
             }
         }
 
+        // Размещение GeneralTable в dgvTable
+        private void PlacedGeneralTable() 
+        {
+            dgvTable.DataSource = generalTable;
+            dgvTable.Columns["№ п_п"].Visible = false;
+            dgvTable.Columns["Объем нагрузки"].Visible = false;
+            dgvTable.Columns["Преподаватель"].Width = 165;
+        }
+        
         // Получить значение int из Object 
         private int GetIntValue(Object ob)
         {
@@ -1488,6 +1497,8 @@ namespace DBviewer
 
             LoadTableReports();
             dgvTable.DataSource = reportsTable;
+            dgvTable.Columns["Id"].Visible = false;
+            dgvTable.Columns["Дисциплина"].Width = 150;
         }
 
         // Возврат на общую форму из формы отчетов
@@ -1506,7 +1517,7 @@ namespace DBviewer
 
             cbTeacher.SelectedIndex = -1;
 
-            dgvTable.DataSource = generalTable;
+            PlacedGeneralTable();
         }
 
         // Показать весь Report
@@ -1633,8 +1644,7 @@ namespace DBviewer
                     MessageBox.Show("Вылет в INSERTe: " + ex);
                 }
 
-                cbTypeOfActivity.SelectedIndex = -1;
-                lbHours.Text = "Часы";
+                lbHours.Text = "Часы (доступно: " + (GetHoursPlan() - GetCompleteHours()) + ")";
             }
         }
 
@@ -1707,6 +1717,51 @@ namespace DBviewer
             dgvTable.DataSource = generalTable; dgvTable.ReadOnly = true;
         }
 
+        // Обработка печати
+        private void btnPrint_Click(object sender, EventArgs e)
+        {
+            SetVisiblePay();
+
+            if (cbTeacher.SelectedIndex == -1)
+            {
+                MessageBox.Show("Нет преподавателя !");
+                return;
+            }
+
+            if (reportsTable.Rows.Count == 0)
+            {
+                MessageBox.Show("Нечего печатать !");
+                return;
+            }
+
+            if (!PrepareOfReport()) return;
+
+            if (printDialog.ShowDialog() != DialogResult.OK) return;
+
+            using (Workbook workbook = new Workbook())
+            {
+                workbook.LoadFromFile(templete);
+                workbook.PrintDocument.Print();
+            }
+
+            MessageBox.Show("Документ отправлен на печать");
+        }
+
+        // Обработка оплаты
+        private void btnOK_Click(object sender, EventArgs e)
+        {
+            SetVisiblePay();
+
+            if (tbPassword.Text == psw)
+            {
+                MarkPay();
+            }
+            else
+            {
+                MessageBox.Show("Не угадал )");
+            }
+        }
+
         // Обработка изменения месяца
         private void cbMonth_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -1774,50 +1829,16 @@ namespace DBviewer
             }
         }
 
-        // Обработка печати
-        private void btnPrint_Click(object sender, EventArgs e)
+        // Обрабатка события изменения дня
+        private void cbDay_SelectedIndexChanged(object sender, EventArgs e)
         {
-            SetVisiblePay();
-
-            if (cbTeacher.SelectedIndex == -1)
+            if (cbDay.SelectedIndex == -1) return;
+            if (DateTime.Parse(cbDay.Text + "/" + (cbMonth.SelectedIndex + 1) + "/" + cbYear.Text) > DateTime.Today)
             {
-                MessageBox.Show("Нет преподавателя !");
-                return;
+                MessageBox.Show("Попытка установки даты будущего !");
+                cbDay.SelectedIndex = -1;
             }
-
-            if (reportsTable.Rows.Count == 0)
-            {
-                MessageBox.Show("Нечего печатать !");
-                return;
-            }
-
-            if(!PrepareOfReport()) return;
-
-            using (Workbook workbook = new Workbook())
-            {
-                workbook.LoadFromFile(templete);
-                workbook.PrintDocument.Print();
-            }
-
-            PrinterSettings printerSetttings = new PrinterSettings();
-            string printer = printerSetttings.PrinterName;
-
-            MessageBox.Show("Документ отправлен на печать.\nПринтер: " + printer);
-        }
-
-        // Обработка оплаты
-        private void btnOK_Click(object sender, EventArgs e)
-        {
-            SetVisiblePay();
-
-            if (tbPassword.Text == psw)
-            {
-                MarkPay();
-            }
-            else
-            {
-                MessageBox.Show("Не угадал )");
-            }
+            return;
         }
     }
 }
