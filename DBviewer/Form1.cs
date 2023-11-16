@@ -1430,6 +1430,7 @@ namespace DBviewer
                     worksheet1.Range[67, 3].Value = GetStringPayment(totalSum);
 
                     workbook.Save();
+                    workbook.SaveToFile((GetShortTeacherName() + "_" + cbMonth.Text + "_" + cbYear.Text).Replace(".", "_").Replace(" ", "_") + ".xlsx");
                 }
             }
             catch (Exception)
@@ -1796,7 +1797,10 @@ namespace DBviewer
                 workbook.PrintDocument.Print();
             }
 
-            MessageBox.Show("Документ отправлен на печать");
+            PrinterSettings printerSetttings = new PrinterSettings();
+            string printer = printerSetttings.PrinterName;
+
+            MessageBox.Show("Документ отправлен на печать.\nПринтер: " + printer);
         }
 
         // Обработка оплаты
