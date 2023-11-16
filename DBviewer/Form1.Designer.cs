@@ -204,7 +204,7 @@ namespace DBviewer
             // lbMonth
             // 
             this.lbMonth.AutoSize = true;
-            this.lbMonth.Location = new System.Drawing.Point(221, 72);
+            this.lbMonth.Location = new System.Drawing.Point(224, 72);
             this.lbMonth.Name = "lbMonth";
             this.lbMonth.Size = new System.Drawing.Size(40, 13);
             this.lbMonth.TabIndex = 11;
@@ -224,7 +224,7 @@ namespace DBviewer
             // lbStadiesForm
             // 
             this.lbStadiesForm.AutoSize = true;
-            this.lbStadiesForm.Location = new System.Drawing.Point(299, 72);
+            this.lbStadiesForm.Location = new System.Drawing.Point(301, 72);
             this.lbStadiesForm.Name = "lbStadiesForm";
             this.lbStadiesForm.Size = new System.Drawing.Size(93, 13);
             this.lbStadiesForm.TabIndex = 13;

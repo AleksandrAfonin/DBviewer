@@ -1669,6 +1669,8 @@ namespace DBviewer
                 }
 
                 dgvTable.ReadOnly = false;
+                dgvTable.Columns["Id"].Visible = false;
+                dgvTable.Columns["Преподаватель"].Width = 300;
             }
             catch (SQLiteException)
             {
@@ -1683,7 +1685,8 @@ namespace DBviewer
             btnAdditionalInfo.Visible = true; btnIntel.Visible = true;
             lbAdditionalInfo.Visible = false; lbGeneralIntel.Visible = true;
 
-            dgvTable.DataSource = generalTable; dgvTable.ReadOnly = true;
+            PlacedGeneralTable();
+            dgvTable.ReadOnly = true;
         }
 
         // Сохранение дополнительной информации и возврат
