@@ -63,6 +63,8 @@ namespace DBviewer
                 connectionString = "Data Source=" + dataBase + "; Version=3; FailIfMissing=True";
             }
 
+            this.Text = "DBviewer - " + dataBase;
+
             LoadDisciplinesTable();
             CreateNewColumnsIfNotExist();
             CreateTableReports();
@@ -1819,7 +1821,6 @@ namespace DBviewer
         private void cbTypeOfActivity_SelectedIndexChanged(object sender, EventArgs e)
         {
             tbHours.Text = "";
-            //Console.WriteLine("По плану: " + GetHoursPlan() + "  Выполнено: " + GetCompleteHours());
             lbHours.Text = "Часы (доступно: " + (GetHoursPlan() - GetCompleteHours()) + ")";
         }
 
