@@ -70,10 +70,11 @@ namespace DBviewer
             this.lbPassword = new System.Windows.Forms.Label();
             this.btnOK = new System.Windows.Forms.Button();
             this.tbLevelEducation = new System.Windows.Forms.TextBox();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.printDialog = new System.Windows.Forms.PrintDialog();
+            this.btnDelete = new System.Windows.Forms.Button();
+            this.pictureBox = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTable)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.SuspendLayout();
             // 
             // dgvTable
@@ -354,9 +355,9 @@ namespace DBviewer
             // 
             // btnEnter
             // 
-            this.btnEnter.Location = new System.Drawing.Point(589, 86);
+            this.btnEnter.Location = new System.Drawing.Point(883, 87);
             this.btnEnter.Name = "btnEnter";
-            this.btnEnter.Size = new System.Drawing.Size(399, 23);
+            this.btnEnter.Size = new System.Drawing.Size(106, 23);
             this.btnEnter.TabIndex = 28;
             this.btnEnter.Text = "Внести";
             this.btnEnter.UseVisualStyleBackColor = true;
@@ -486,7 +487,7 @@ namespace DBviewer
             // 
             // btnOK
             // 
-            this.btnOK.Location = new System.Drawing.Point(884, 86);
+            this.btnOK.Location = new System.Drawing.Point(884, 87);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(104, 23);
             this.btnOK.TabIndex = 41;
@@ -499,30 +500,42 @@ namespace DBviewer
             // 
             this.tbLevelEducation.Location = new System.Drawing.Point(362, 89);
             this.tbLevelEducation.Name = "tbLevelEducation";
+            this.tbLevelEducation.ReadOnly = true;
             this.tbLevelEducation.Size = new System.Drawing.Size(60, 20);
             this.tbLevelEducation.TabIndex = 42;
             this.tbLevelEducation.Visible = false;
             // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = global::DBviewer.Properties.Resources.aso;
-            this.pictureBox1.Location = new System.Drawing.Point(12, 5);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(0);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(144, 104);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
-            this.pictureBox1.TabIndex = 34;
-            this.pictureBox1.TabStop = false;
-            // 
             // printDialog
             // 
             this.printDialog.UseEXDialog = true;
+            // 
+            // btnDelete
+            // 
+            this.btnDelete.Location = new System.Drawing.Point(588, 87);
+            this.btnDelete.Name = "btnDelete";
+            this.btnDelete.Size = new System.Drawing.Size(291, 23);
+            this.btnDelete.TabIndex = 43;
+            this.btnDelete.Text = "Удалить выделенные строки";
+            this.btnDelete.UseVisualStyleBackColor = true;
+            this.btnDelete.Visible = false;
+            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            // 
+            // pictureBox
+            // 
+            this.pictureBox.Location = new System.Drawing.Point(12, 5);
+            this.pictureBox.Margin = new System.Windows.Forms.Padding(0);
+            this.pictureBox.Name = "pictureBox";
+            this.pictureBox.Size = new System.Drawing.Size(144, 104);
+            this.pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.pictureBox.TabIndex = 34;
+            this.pictureBox.TabStop = false;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1002, 534);
+            this.Controls.Add(this.btnDelete);
             this.Controls.Add(this.tbLevelEducation);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.lbPassword);
@@ -531,7 +544,7 @@ namespace DBviewer
             this.Controls.Add(this.lbIntelHours);
             this.Controls.Add(this.lbAdditionalInfo);
             this.Controls.Add(this.lbGeneralIntel);
-            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.pictureBox);
             this.Controls.Add(this.btnPrint);
             this.Controls.Add(this.btnBackAdditionalInfo);
             this.Controls.Add(this.btnSaveAdditionalInfo);
@@ -570,7 +583,7 @@ namespace DBviewer
             this.Load += new System.EventHandler(this.Form1_Load);
             this.SizeChanged += new System.EventHandler(this.Form1_SizeChanged);
             ((System.ComponentModel.ISupportInitialize)(this.dgvTable)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -610,7 +623,7 @@ namespace DBviewer
         private System.Windows.Forms.Button btnBackAdditionalInfo;
         private System.Windows.Forms.Button btnPrint;
         private System.Windows.Forms.OpenFileDialog openFileDialog;
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox pictureBox;
         private System.Windows.Forms.Label lbGeneralIntel;
         private System.Windows.Forms.Label lbAdditionalInfo;
         private System.Windows.Forms.Label lbIntelHours;
@@ -620,6 +633,7 @@ namespace DBviewer
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.TextBox tbLevelEducation;
         private System.Windows.Forms.PrintDialog printDialog;
+        private System.Windows.Forms.Button btnDelete;
     }
 }
 

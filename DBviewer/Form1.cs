@@ -70,8 +70,10 @@ namespace DBviewer
             CreateTableReports();
             LoadTeachersTable();
             CreateTableCurConsultHours();
+            CreateDirectorColumn();
             GeneralTable();
             FillCBTeacher();
+            Logo();
             Activate();
         }
 
@@ -123,7 +125,158 @@ namespace DBviewer
             }
         }
 
-        // Создание новых столбцов если не существуют
+        // Получить ФИО руководителя кафедры
+        private string GetDirectorName(int semester)
+        {
+            string name;
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT FIO" +
+                              " FROM Teachers WHERE Id = (SELECT IdFinAttest FROM Disciplines WHERE DisName LIKE '%ук%' " +
+                              "AND DisName LIKE '%каф%' AND Semester = " + semester + ")", connection);
+                    name = GetStringValue(CMD.ExecuteScalar());
+                }
+
+                int index1 = name.IndexOf(" ");
+                return name.Substring(index1 + 1).Trim() + " " + name.Substring(0, index1).Trim();
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось получить руководителя кафедры");
+                return "";
+            }
+        }
+
+        // Создание столбца DirectorName в таблице Info если не существует
+        private void CreateDirectorColumn()
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT DirectorName FROM Info", connection);
+                    adapter = new SQLiteDataAdapter(CMD);
+                    DataTable table = new DataTable();
+                    adapter.Fill(table);
+                }
+            }
+            catch (SQLiteException)
+            {
+                try
+                {
+                    using (connection = new SQLiteConnection(connectionString))
+                    {
+                        connection.Open();
+                        CMD = new SQLiteCommand("ALTER TABLE Info ADD COLUMN DirectorName TEXT(100)", connection);
+                        CMD.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    MessageBox.Show("Не удалось добавить столбец DirectorName в таблицу Info");
+                }
+            }
+
+            if (GetDepartmentDirector() == "")
+            {
+                // Получить руководителя
+                int month = DateTime.Today.Month;
+                int semester = month < 9 && month > 1 ? 2 : 1;
+                string directorName = GetDirectorName(semester);
+                try
+                {
+                    using (connection = new SQLiteConnection(connectionString))
+                    {
+                        connection.Open();
+                        CMD = new SQLiteCommand("UPDATE Info SET DirectorName = '" + directorName +
+                            "' WHERE Id = 1", connection);
+                        CMD.ExecuteNonQuery();
+                    }
+                }
+                catch (SQLiteException)
+                {
+                    MessageBox.Show("Не удалось внести DirectorName в таблицу Info");
+                }
+            }
+        }
+
+        // Получить название кафедры
+        private string GetDepartmentName()
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT DepartmentName" +
+                              " FROM Info WHERE Id = 1", connection);
+                    return GetStringValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось получить название кафедры");
+                return "";
+            }
+        }
+
+        // Получит руководителя кафедры из таблицы Info
+        private string GetDepartmentDirector()
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    CMD = new SQLiteCommand("SELECT DirectorName" +
+                              " FROM Info WHERE Id = 1", connection);
+                    return GetStringValue(CMD.ExecuteScalar());
+                }
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось получить руководителя кафедры");
+                return "";
+            }
+        }
+
+        // Установка логотипа
+        private void Logo()
+        {
+            string departmentName = GetDepartmentName();
+            switch (departmentName)
+            {
+                case "АСОИУ": pictureBox.Image = Properties.Resources.asoiu;
+                    break;
+                case "espp":
+                    pictureBox.Image = Properties.Resources.espp;
+                    break;
+                case "tm":
+                    pictureBox.Image = Properties.Resources.tm;
+                    break;
+                case "ttp":
+                    pictureBox.Image = Properties.Resources.ttp;
+                    break;
+                case "end":
+                    pictureBox.Image = Properties.Resources.end;
+                    break;
+                case "egn":
+                    pictureBox.Image = Properties.Resources.egn;
+                    break;
+                case "iygn":
+                    pictureBox.Image = Properties.Resources.iygn;
+                    break;
+                case "tti":
+                    pictureBox.Image = Properties.Resources.tti;
+                    break;
+            }
+        }
+
+        // Создание новых столбцов если не существуют в таблице Teachers
         private void CreateNewColumnsIfNotExist()
         {
             try
@@ -348,15 +501,41 @@ namespace DBviewer
         // Генерация общей таблицы
         private void GeneralTable()
         {
+            generalTable.Columns.Add("№ п_п");
+            generalTable.Columns.Add("Преподаватель");
+
+            DataTable tempTable = new DataTable();
+
             try
             {
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT teach.Id AS '№ п_п', teach.FIO AS Преподаватель" +
-                                            " FROM Teachers AS teach ORDER BY teach.Id", connection);
+                    CMD = new SQLiteCommand("SELECT Id AS '№ п_п', FIO AS Преподаватель" +
+                                            " FROM Teachers ORDER BY FIO", connection);
                     adapter = new SQLiteDataAdapter(CMD);
-                    adapter.Fill(generalTable);
+                    adapter.Fill(tempTable);
+
+                    foreach(DataRow row in tempTable.Rows)
+                    {
+                        if (row["Преподаватель"].ToString().Contains("очасов"))
+                        {
+                            DataRow dataRow = generalTable.NewRow();
+                            dataRow[0] = row[0]; dataRow[1] = row[1];
+                            generalTable.Rows.Add(dataRow);
+                        }
+                    }
+
+                    foreach (DataRow row in tempTable.Rows)
+                    {
+                        if (!row["Преподаватель"].ToString().Contains("очасов"))
+                        {
+                            DataRow dataRow = generalTable.NewRow();
+                            dataRow[0] = row[0]; dataRow[1] = row[1];
+                            generalTable.Rows.Add(dataRow);
+                        }
+                    }
+
                     generalTable.Columns.Add("Лекции план", typeof(Int32));
                     generalTable.Columns.Add("Лекции выполнено", typeof(Int32));
                     generalTable.Columns.Add("Практика план", typeof(Int32));
@@ -590,7 +769,7 @@ namespace DBviewer
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT DISTINCT FIO" +
-                                            " FROM Teachers WHERE FIO LIKE 'Почасов%' ORDER BY Id", connection);
+                                            " FROM Teachers WHERE FIO LIKE '%очасов%' ORDER BY FIO", connection);
                     adapter = new SQLiteDataAdapter(CMD);
                     DataTable table = new DataTable();
                     adapter.Fill(table);
@@ -615,6 +794,31 @@ namespace DBviewer
             for (int i = 1; i <= days; i++)
             {
                 cbDay.Items.Add(i.ToString());
+            }
+        }
+
+        // Удаление записей из таблицы отчетов
+        private void DeleteFromReports()
+        {
+            try
+            {
+                using (connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    foreach (DataGridViewRow dataRow in dgvTable.SelectedRows)
+                    {
+                        Console.WriteLine("Строка: " + dataRow.Cells["Id"].Value);
+
+                        CMD = new SQLiteCommand("DELETE FROM Reports WHERE Id = " + dataRow.Cells["Id"].Value + " AND PaymentMark IS NULL", connection);
+                        CMD.ExecuteNonQuery();
+                    }
+                }
+
+                MessageBox.Show("Операция прошла успешно");
+            }
+            catch (SQLiteException)
+            {
+                MessageBox.Show("Не удалось удалить строку/строки");
             }
         }
 
@@ -1429,6 +1633,9 @@ namespace DBviewer
                         
                     worksheet1.Range[53, 2].Text = DateTime.Today.ToShortDateString();
 
+                    worksheet1.Range[56, 5].Text = GetDepartmentName();
+                    worksheet1.Range[57, 5].Text = GetDepartmentDirector();
+
                     for (int col = 3; col <= 16; col++)
                     {
                         worksheet1.Range[63, col].Value2 = hours[col - 3];
@@ -1566,7 +1773,7 @@ namespace DBviewer
             tbHours.Visible = true; lbHours.Visible = true;
             tbLevelEducation.Visible = true; lbLevelEducation.Visible = true;
             lbIntelHours.Visible = false; lbEnterIntel.Visible = true;
-            btnPrint.Visible = false;
+            btnPrint.Visible = false; btnDelete.Visible = true;
 
             isInput = true;
             tbHours.Text = "";
@@ -1587,7 +1794,7 @@ namespace DBviewer
             tbHours.Visible = false; lbHours.Visible = false;
             tbLevelEducation.Visible = false; lbLevelEducation.Visible = false;
             lbIntelHours.Visible = true; lbEnterIntel.Visible = false;
-            btnPrint.Visible = true;
+            btnPrint.Visible = true; btnDelete.Visible = false;
 
             cbTeacher.SelectedIndex = -1;
 
@@ -1605,6 +1812,12 @@ namespace DBviewer
                 if (hours > hoursAvailable)
                 {
                     MessageBox.Show("Количество часов превышает доступное !");
+                    return;
+                }
+                
+                if (hours < 1)
+                {
+                    MessageBox.Show("Не корретный ввод отработанных часов !");
                     return;
                 }
             }
@@ -1837,12 +2050,20 @@ namespace DBviewer
         private void cbDay_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (cbDay.SelectedIndex == -1) return;
-            if (DateTime.Parse(cbDay.Text + "/" + (cbMonth.SelectedIndex + 1) + "/" + cbYear.Text) > DateTime.Today)
+            if (DateTime.Parse("01/" + (cbMonth.SelectedIndex + 1) + "/" + cbYear.Text) > DateTime.Today)
             {
                 MessageBox.Show("Попытка установки даты будущего !");
                 cbDay.SelectedIndex = -1;
             }
             return;
+        }
+        
+        // Обработка нажатия кнопки "удалить выбранные строки"
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (dgvTable.SelectedRows.Count == 0) return;
+            DeleteFromReports();
+            LoadTableReportsWithArguments();
         }
     }
 }
