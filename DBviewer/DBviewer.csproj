@@ -188,6 +188,7 @@
     <Content Include="Images\tm.png" />
     <Content Include="Images\tti.png" />
     <Content Include="Images\ttp.png" />
+    <EmbeddedResource Include="Images\UnKnown.png" />
     <Content Include="Images\zn.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
