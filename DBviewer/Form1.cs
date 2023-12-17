@@ -20,7 +20,6 @@ namespace DBviewer
         private static string connectionString = "Data Source=" + dataBase + "; Version=3; FailIfMissing=True";
         private string templete = "template.xlsx";
         private string psw = "admin";
-        //private int indexYear, indexMonth;
 
         SQLiteConnection connection;
         SQLiteCommand CMD;
@@ -30,6 +29,9 @@ namespace DBviewer
         DataTable generalTable = new DataTable();
         DataTable reportsTable = new DataTable();
         DataTable curConsultHoursTable = new DataTable();
+        DataTable detailInfoTable = new DataTable();
+
+        Form2 form2;
 
         Size dgvTableSize;
 
@@ -68,6 +70,7 @@ namespace DBviewer
 
             LoadDisciplinesTable();
             CreateNewColumnsIfNotExist();
+            CreateDetailInfoTable();
             CreateTableReports();
             LoadTeachersTable();
             CreateTableCurConsultHours();
@@ -509,6 +512,108 @@ namespace DBviewer
             }
         }
         
+        // Создание таблицы DetailInfoTable
+        private void CreateDetailInfoTable()
+        {
+            detailInfoTable.Columns.Add("Дисциплина", typeof(string));
+            detailInfoTable.Columns.Add("Группа", typeof(string));
+            detailInfoTable.Columns.Add("Курс", typeof(Int32));
+            detailInfoTable.Columns.Add("Семестр", typeof(Int32));
+            detailInfoTable.Columns.Add("Продолжительность", typeof(Int32));
+            detailInfoTable.Columns.Add("Студентов", typeof(Int32));
+            detailInfoTable.Columns.Add("Лекции", typeof(Int32));
+            detailInfoTable.Columns.Add("Практика", typeof(Int32));
+            detailInfoTable.Columns.Add("Лабораторные работы", typeof(Int32));
+            detailInfoTable.Columns.Add("Текущие консультации", typeof(Int32));
+            detailInfoTable.Columns.Add("Предэкзаменационные консультации", typeof(Int32));
+            detailInfoTable.Columns.Add("Экзамен", typeof(Int32));
+            detailInfoTable.Columns.Add("Зачет", typeof(Int32));
+            detailInfoTable.Columns.Add("Прочие", typeof(Int32));
+            detailInfoTable.Columns.Add("Всего", typeof(Int32));
+        }
+
+        // Подготовка таблицы детальной информации по преподавателю
+        private void PrepareDetailInfoTable(string fio)
+        {
+            int teacherId = GetTeacherId(fio);
+            detailInfoTable.Clear();
+            DataRow dataRow;
+
+            int totalLecture = 0, totalPractice = 0, totalLab = 0, totalCurConsult = 0, totalExamConsult = 0, totalExam = 0, totalCredit = 0, totalFinAttest = 0, totalAll = 0;
+
+            for (int semester = 1; semester < 3; semester++)
+            {
+                int lecture = 0, practice = 0, lab = 0, curConsult = 0, examConsult = 0, exam = 0, credit = 0, finAttest = 0, all = 0;
+                dataRow = detailInfoTable.NewRow();
+                if (semester == 1) dataRow["Дисциплина"] = "ПЕРВОЕ ПОЛУГОДИЕ:"; else dataRow["Дисциплина"] = "ВТОРОЕ ПОЛУГОДИЕ:";
+                detailInfoTable.Rows.Add(dataRow);
+
+                foreach (DataRow disRow in disciplinesTable.Rows)
+                {
+                    if (GetIntValue(disRow["IdLector"]) == teacherId || GetIntValue(disRow["IdPractice"]) == teacherId ||
+                        GetIntValue(disRow["IdLab1"]) == teacherId || GetIntValue(disRow["IdLab2"]) == teacherId ||
+                        GetIntValue(disRow["IdFinAttest"]) == teacherId || GetIntValue(disRow["IdExam"]) == teacherId)
+                    {
+                        if (GetSemesterFromTable(disRow) == semester)
+                        {
+                            dataRow = detailInfoTable.NewRow();
+                            dataRow["Дисциплина"] = GetStringValue(disRow["DisName"]);
+                            if (GetStringValue(disRow["GroupName"]) != "") dataRow["Группа"] = GetStringValue(disRow["GroupName"]);
+                            if (GetIntValue(disRow["Semester"]) != 0) dataRow["Курс"] = (GetIntValue(disRow["Semester"]) + 1) / 2;
+                            if (GetIntValue(disRow["Semester"]) != 0) dataRow["Семестр"] = GetIntValue(disRow["Semester"]);
+                            if (GetIntValue(disRow["CountWeeks"]) != 0) dataRow["Продолжительность"] = GetIntValue(disRow["CountWeeks"]);
+                            if (GetIntValue(disRow["CountStudents"]) != 0) dataRow["Студентов"] = GetIntValue(disRow["CountStudents"]);
+                            if (GetIntValue(disRow["IdLector"]) == teacherId && GetIntValue(disRow["LectureHours"]) != 0) { lecture += GetIntValue(disRow["LectureHours"]); dataRow["Лекции"] = GetIntValue(disRow["LectureHours"]); }
+                            if (GetIntValue(disRow["IdPractice"]) == teacherId && GetIntValue(disRow["PracticeHours"]) != 0) { practice += GetIntValue(disRow["PracticeHours"]); dataRow["Практика"] = GetIntValue(disRow["PracticeHours"]); }
+                            if (GetIntValue(disRow["IdLab1"]) == teacherId && GetIntValue(disRow["IdLab2"]) == teacherId && GetIntValue(disRow["LabHours"]) != 0) { lab += GetIntValue(disRow["LabHours"]); dataRow["Лабораторные работы"] = GetIntValue(disRow["LabHours"]); }
+                            if (((GetIntValue(disRow["IdLab1"]) == teacherId && GetIntValue(disRow["IdLab2"]) != teacherId) ||
+                                (GetIntValue(disRow["IdLab1"]) != teacherId && GetIntValue(disRow["IdLab2"]) == teacherId)) && GetIntValue(disRow["LabHours"]) != 0) { lab += GetIntValue(disRow["LabHours"]) / 2; dataRow["Лабораторные работы"] = GetIntValue(disRow["LabHours"]) / 2; }
+                            int curConHours = GetCurConsultHours(fio, GetStringValue(disRow["DisName"]), GetStringValue(disRow["GroupName"]), semester);
+                            if (curConHours != 0) { curConsult += curConHours; dataRow["Текущие консультации"] = curConHours; }
+                            if (GetIntValue(disRow["IdExam"]) == teacherId)
+                            {
+                                if (GetIntValue(disRow["ExamConsultHours"]) != 0) { examConsult += GetIntValue(disRow["ExamConsultHours"]); dataRow["Предэкзаменационные консультации"] = GetIntValue(disRow["ExamConsultHours"]); }
+                                if (GetIntValue(disRow["ExamHours"]) != 0) { exam += GetIntValue(disRow["ExamHours"]); dataRow["Экзамен"] = GetIntValue(disRow["ExamHours"]); }
+                                if (GetIntValue(disRow["CreditHours"]) != 0) { credit += GetIntValue(disRow["CreditHours"]); dataRow["Зачет"] = GetIntValue(disRow["CreditHours"]); }
+                            }
+                            if (GetIntValue(disRow["IdFinAttest"]) == teacherId && GetIntValue(disRow["FinAttestHours"]) != 0) { finAttest += GetIntValue(disRow["FinAttestHours"]); dataRow["Прочие"] = GetIntValue(disRow["FinAttestHours"]); }
+                            int count = GetIntValue(dataRow["Лекции"]) + GetIntValue(dataRow["Практика"]) + GetIntValue(dataRow["Лабораторные работы"]) + GetIntValue(dataRow["Текущие консультации"]) +
+                                GetIntValue(dataRow["Предэкзаменационные консультации"]) + GetIntValue(dataRow["Экзамен"]) + GetIntValue(dataRow["Зачет"]) + GetIntValue(dataRow["Прочие"]);
+                            if (count != 0) dataRow["Всего"] = count;
+                            all += count;
+                            detailInfoTable.Rows.Add(dataRow);
+                        }
+                    }
+                }
+                dataRow = detailInfoTable.NewRow();
+                if (semester == 1) dataRow["Дисциплина"] = "ИТОГО ЗА ПЕРВОЕ ПОЛУГОДИЕ"; else dataRow["Дисциплина"] = "ИТОГО ЗА ВТОРОЕ ПОЛУГОДИЕ";
+                if (lecture != 0) dataRow["Лекции"] = lecture;
+                if (practice != 0) dataRow["Практика"] = practice;
+                if (lab != 0) dataRow["Лабораторные работы"] = lab;
+                if (curConsult != 0) dataRow["Текущие консультации"] = curConsult;
+                if (examConsult != 0) dataRow["Предэкзаменационные консультации"] = examConsult;
+                if (exam != 0) dataRow["Экзамен"] = exam;
+                if (credit != 0) dataRow["Зачет"] = credit;
+                if (finAttest != 0) dataRow["Прочие"] = finAttest;
+                if (all != 0) dataRow["Всего"] = all;
+                totalLecture += lecture; totalPractice += practice; totalLab += lab; totalCurConsult += curConsult;
+                totalExamConsult += examConsult; totalExam += exam; totalCredit += credit; totalFinAttest += finAttest; totalAll += all;
+                detailInfoTable.Rows.Add(dataRow);
+            }
+            dataRow = detailInfoTable.NewRow();
+            dataRow["Дисциплина"] = "ИТОГО ЗА УЧЕБНЫЙ ГОД";
+            if (totalLecture != 0) dataRow["Лекции"] = totalLecture;
+            if (totalPractice != 0) dataRow["Практика"] = totalPractice;
+            if (totalLab != 0) dataRow["Лабораторные работы"] = totalLab;
+            if (totalCurConsult != 0) dataRow["Текущие консультации"] = totalCurConsult;
+            if (totalExamConsult != 0) dataRow["Предэкзаменационные консультации"] = totalExamConsult;
+            if (totalExam != 0) dataRow["Экзамен"] = totalExam;
+            if (totalCredit != 0) dataRow["Зачет"] = totalCredit;
+            if (totalFinAttest != 0) dataRow["Прочие"] = totalFinAttest;
+            if (totalAll != 0) dataRow["Всего"] = totalAll;
+            detailInfoTable.Rows.Add(dataRow);
+        }
+        
         // Генерация общей таблицы
         private void GeneralTable()
         {
@@ -707,11 +812,11 @@ namespace DBviewer
                 bool IsSemesterReports(DataRow repRow)
                 {
                     if (cbPeriod.SelectedIndex == 0) return true;
-                    string str = GetStringValue(repRow["ИА ГАК ГЭК"]);
-                    str = str.Substring(0, 2);
-                    int month = Convert.ToInt32(str);
-                    int semester = month < 9 && month > 1 ? 2 : 1;
-                    if (cbPeriod.SelectedIndex == semester) return true;
+                    //string str = GetStringValue(repRow["ИА ГАК ГЭК"]);
+                    //str = str.Substring(0, 2);
+                    //int month = Convert.ToInt32(str);
+                    //int semester = month < 9 && month > 1 ? 2 : 1;
+                    if (cbPeriod.SelectedIndex == GetIntValue(repRow["Полугодие"])) return true;
                     return false;
                 }
 
@@ -755,6 +860,23 @@ namespace DBviewer
             }
         }
 
+        // Получить часы текущих консультаций для преподавателя, дисциплины, группы, семестра
+        private int GetCurConsultHours(string fio, string discipline, string group, int semester)
+        {
+            int sum = 0;
+            foreach (DataRow dataRow in curConsultHoursTable.Rows)
+            {
+                if (discipline == GetStringValue(dataRow["DisName"]) && group == GetStringValue(dataRow["GroupName"]) && semester == GetIntValue(dataRow["Semester"])) 
+                {
+                    if (fio == GetStringValue(dataRow["FIOLector"])) sum += GetIntValue(dataRow["LectorHours"]);
+                    if (fio == GetStringValue(dataRow["FIOPractice"])) sum += GetIntValue(dataRow["PracticeHours"]);
+                    if (fio == GetStringValue(dataRow["FIOLab1"])) sum += GetIntValue(dataRow["Lab1Hours"]);
+                    if (fio == GetStringValue(dataRow["FIOLab2"])) sum += GetIntValue(dataRow["Lab2Hours"]);
+                }
+            }
+            return sum;
+        }
+
         // Получить преподавателя почасовика
         private string GetTeacherHours(string name)
         {
@@ -771,7 +893,7 @@ namespace DBviewer
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("CREATE TABLE IF NOT EXISTS Reports (Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE," +
-                            " DisName TEXT(100), GroupName TEXT(20), LectureHours INTEGER, PracticeHours INTEGER," +
+                            " DisName TEXT(100), GroupName TEXT(20), HalfYear INTEGER, LectureHours INTEGER, PracticeHours INTEGER," +
                             " LabHours INTEGER, CurConsultHours INTEGER, ExamConsultHours INTEGER," +
                             " ExamHours INTEGER, CreditHours INTEGER, FinAttestHours INTEGER," +
                             " TotalHours INTEGER, Date TEXT(10), IaGakGek TEXT(100), PaymentMark TEXT(20))", connection);
@@ -792,7 +914,7 @@ namespace DBviewer
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT Id, DisName AS Дисциплина, GroupName AS Группа, LectureHours AS Лекции, PracticeHours AS Практика," +
+                    CMD = new SQLiteCommand("SELECT Id, DisName AS Дисциплина, GroupName AS Группа, HalfYear AS Полугодие, LectureHours AS Лекции, PracticeHours AS Практика," +
                         " LabHours AS Лабораторные, CurConsultHours AS 'Текущие консультации', ExamConsultHours AS 'Предэкзаменационные консультации'," +
                         " ExamHours AS Экзамены, CreditHours AS Зачеты, FinAttestHours AS 'Итоговая аттестация'," +
                         " TotalHours AS Всего, Date AS Дата, IaGakGek AS 'ИА ГАК ГЭК', PaymentMark AS Оплата FROM Reports", connection);
@@ -815,12 +937,12 @@ namespace DBviewer
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT Id, DisName AS Дисциплина, GroupName AS Группа, LectureHours AS Лекции, PracticeHours AS Практика," +
+                    CMD = new SQLiteCommand("SELECT Id, DisName AS Дисциплина, GroupName AS Группа, HalfYear AS Полугодие, LectureHours AS Лекции, PracticeHours AS Практика," +
                         " LabHours AS Лабораторные, CurConsultHours AS 'Текущие консультации', ExamConsultHours AS 'Предэкзаменационные консультации'," +
                         " ExamHours AS Экзамены, CreditHours AS Зачеты, FinAttestHours AS 'Итоговая аттестация'," +
                         " TotalHours AS Всего, Date AS Дата, IaGakGek AS 'ИА ГАК ГЭК', PaymentMark AS Оплата FROM Reports WHERE" +
                         " IaGakGek LIKE '" + GetStringWith0(cbMonth.SelectedIndex + 1) + "%' AND IaGakGek LIKE '%" + cbYear.Text + "%' AND IaGakGek LIKE '%" +
-                        cbTeacher.Text + "%' AND IaGakGek LIKE '%" + cbStudiesForm.Text + "%' AND PaymentMark IS NULL", connection);
+                        cbTeacher.Text + "%' AND IaGakGek LIKE '%" + cbStudiesForm.Text + "%' AND PaymentMark IS NULL AND HalfYear = " + (cbHalfYear2.SelectedIndex + 1), connection);
                     adapter = new SQLiteDataAdapter(CMD);
                     reportsTable.Clear();
                     adapter.Fill(reportsTable);
@@ -895,14 +1017,14 @@ namespace DBviewer
         }
 
         // Получит Id преподавателя
-        private int GetTeacherId()
+        private int GetTeacherId(string fio)
         {
             try
             {
                 using (connection = new SQLiteConnection(connectionString))
                 {
                     connection.Open();
-                    CMD = new SQLiteCommand("SELECT Id FROM Teachers WHERE FIO = '" + cbTeacher.Text + "'", connection);
+                    CMD = new SQLiteCommand("SELECT Id FROM Teachers WHERE FIO = '" + fio + "'", connection);
                     return GetIntValue(CMD.ExecuteScalar());
                 }
             }
@@ -918,7 +1040,7 @@ namespace DBviewer
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             string discipline = cbDiscipline.Text, group = cbStudiesGroup.Text, level = tbLevelEducation.Text;
-            int teacherId = GetTeacherId();
+            int teacherId = GetTeacherId(cbTeacher.Text);
             int semesterCur = GetCurSemestr();
             int sum = 0;
 
@@ -937,14 +1059,14 @@ namespace DBviewer
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             string discipline = cbDiscipline.Text, group = cbStudiesGroup.Text, level = tbLevelEducation.Text;
-            int teacherId = GetTeacherId();
+            int teacherId = GetTeacherId(cbTeacher.Text);
             int semesterCur = GetCurSemestr();
             int sum = 0;
 
             foreach (DataRow dataRow in disciplinesTable.Rows)
             {
                 if (GetStringValue(dataRow["DisName"]) == discipline && GetStringValue(dataRow["GroupName"]) == group &&
-                    GetStringValue(dataRow["LevelEducation"]) == level && GetIntValue(dataRow["IdLector"]) == teacherId &&
+                    GetStringValue(dataRow["LevelEducation"]) == level && GetIntValue(dataRow["IdPractice"]) == teacherId &&
                     GetSemesterFromTable(dataRow) == semesterCur) sum += GetIntValue(dataRow["PracticeHours"]);
             }
 
@@ -956,7 +1078,7 @@ namespace DBviewer
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             string discipline = cbDiscipline.Text, group = cbStudiesGroup.Text, level = tbLevelEducation.Text;
-            int teacherId = GetTeacherId();
+            int teacherId = GetTeacherId(cbTeacher.Text);
             int semesterCur = GetCurSemestr();
             int sum = 0;
 
@@ -979,7 +1101,7 @@ namespace DBviewer
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             string discipline = cbDiscipline.Text, group = cbStudiesGroup.Text, level = tbLevelEducation.Text;
-            int teacherId = GetTeacherId();
+            int teacherId = GetTeacherId(cbTeacher.Text);
             int semesterCur = GetCurSemestr();
             int sum = 0;
 
@@ -1019,7 +1141,7 @@ namespace DBviewer
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             string discipline = cbDiscipline.Text, group = cbStudiesGroup.Text, level = tbLevelEducation.Text;
-            int teacherId = GetTeacherId();
+            int teacherId = GetTeacherId(cbTeacher.Text);
             int semesterCur = GetCurSemestr();
             int sum = 0;
 
@@ -1038,7 +1160,7 @@ namespace DBviewer
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             string discipline = cbDiscipline.Text, group = cbStudiesGroup.Text, level = tbLevelEducation.Text;
-            int teacherId = GetTeacherId();
+            int teacherId = GetTeacherId(cbTeacher.Text);
             int semesterCur = GetCurSemestr();
             int sum = 0;
 
@@ -1057,7 +1179,7 @@ namespace DBviewer
         {
             if (cbTeacher.SelectedIndex == -1 || cbDiscipline.SelectedIndex == -1 || cbStudiesGroup.SelectedIndex == -1) return 0;
             string discipline = cbDiscipline.Text, group = cbStudiesGroup.Text, level = tbLevelEducation.Text;
-            int teacherId = GetTeacherId();
+            int teacherId = GetTeacherId(cbTeacher.Text);
             int semesterCur = GetCurSemestr();
             int sum = 0;
 
@@ -1084,24 +1206,13 @@ namespace DBviewer
             {
                 if (GetStringValue(repRow["ИА ГАК ГЭК"]).Contains(teacher) && 
                     GetStringValue(repRow["Дисциплина"]) == discipline && GetStringValue(repRow["Группа"]) == group &&
-                    IsSemesterReports(repRow, semesterCur) && IsLevelReports(repRow, level)) sum += GetIntValue(repRow[field]);
+                    GetIntValue(repRow["Полугодие"]) == semesterCur && IsLevelReports(repRow, level)) sum += GetIntValue(repRow[field]);
             }
 
             return sum;
         }
 
-        // Получить соответствие семестра из таблицы reportsTable
-        private bool IsSemesterReports(DataRow repRow, int semesterCur)
-        {
-            string str = GetStringValue(repRow["ИА ГАК ГЭК"]);
-            str = str.Substring(0, 2);
-            int month = Convert.ToInt32(str);
-            int semester = month < 9 && month > 1 ? 2 : 1;
-            if (semester == semesterCur) return true;
-            return false;
-        }
-
-        // Получить соответствие семестра из таблицы reportsTable
+        // Получить соответствие уровня из таблицы reportsTable
         private bool IsLevelReports(DataRow repRow, string level)
         {
             string str = GetStringValue(repRow["ИА ГАК ГЭК"]);
@@ -1170,7 +1281,7 @@ namespace DBviewer
         // Получить семестр (полугодие)
         private int GetCurSemestr()
         {
-            return cbMonth.SelectedIndex < 8 && cbMonth.SelectedIndex > 0 ? 2 : 1;
+            return cbHalfYear.SelectedIndex + 1;
         }
 
         // Получить сумму оплаты прописью
@@ -1488,28 +1599,28 @@ namespace DBviewer
             {
                 date.Add(dataRow["Дата"].ToString());
                 groupName.Add(dataRow["Группа"].ToString());
-                for(int i = 3; i <= 10; i++)
+                for(int i = 4; i <= 11; i++)
                 {
                     value = GetIntValue(dataRow[i]);
                     if(value != 0)
                     {
                         switch (i)
                         {
-                            case 3: typeOfActivity.Add("Лекции"); quantity.Add(value); hours[0] += value;
+                            case 4: typeOfActivity.Add("Лекции"); quantity.Add(value); hours[0] += value;
                                 break;
-                            case 4: typeOfActivity.Add("Практика"); quantity.Add(value); hours[2] += value;
+                            case 5: typeOfActivity.Add("Практика"); quantity.Add(value); hours[2] += value;
                                 break;
-                            case 5: typeOfActivity.Add("Лаб."); quantity.Add(value); hours[1] += value;
+                            case 6: typeOfActivity.Add("Лаб."); quantity.Add(value); hours[1] += value;
                                 break;
-                            case 6: typeOfActivity.Add("Тек. конс."); quantity.Add(value); hours[3] += value;
+                            case 7: typeOfActivity.Add("Тек. конс."); quantity.Add(value); hours[3] += value;
                                 break;
-                            case 7: typeOfActivity.Add("Предэкзам. конс."); quantity.Add(value); hours[4] += value;
+                            case 8: typeOfActivity.Add("Предэкзам. конс."); quantity.Add(value); hours[4] += value;
                                 break;
-                            case 8: typeOfActivity.Add("Экзамены"); quantity.Add(value); hours[5] += value;
+                            case 9: typeOfActivity.Add("Экзамены"); quantity.Add(value); hours[5] += value;
                                 break;
-                            case 9: typeOfActivity.Add("Зачеты"); quantity.Add(value); hours[6] += value;
+                            case 10: typeOfActivity.Add("Зачеты"); quantity.Add(value); hours[6] += value;
                                 break;
-                            case 10:
+                            case 11:
                                 string disName = dataRow["Дисциплина"].ToString();
                                 if (disName.Contains("ИА") && disName.Contains("сн") && disName.Contains("ру")) { typeOfActivity.Add(disName); quantity.Add(value); hours[7] += value; }
                                 if (disName.Contains("ИА") && disName.Contains("еце")) { typeOfActivity.Add(disName); quantity.Add(value); hours[8] += value; }
@@ -1534,7 +1645,7 @@ namespace DBviewer
 
                     worksheet1.Range[4, 1].Value = str4;
 
-                    worksheet1.Range[7, 1].Text = "в " + GetCurSemestr() + " семестре " + cbYear.Items[0].ToString() +
+                    worksheet1.Range[7, 1].Text = "в " + (cbHalfYear2.SelectedIndex + 1) + " семестре " + cbYear.Items[0].ToString() +
                            "/" + cbYear.Items[1].ToString() + " учебного года";
                     worksheet1.Range[8, 1].Text = "в период с «01» " + cbMonth.Text + " " + cbYear.Text +
                         "г. по «" + cbDay.Items.Count + "» " + cbMonth.Text + " " + cbYear.Text + "г.";
@@ -1637,8 +1748,10 @@ namespace DBviewer
             btnPrint.Visible = true;
             cbPeriod.Visible = false; lbPeriod.Visible = false;
             cbLevel.Visible = false; lbLevel.Visible = false;
+            cbHalfYear2.Visible = true; lbHalfYear2.Visible = true;
 
             cbStudiesForm.SelectedIndex = 0;
+            cbHalfYear2.SelectedIndex = 0;
 
             LoadTableReports();
             dgvTable.DataSource = reportsTable;
@@ -1661,6 +1774,7 @@ namespace DBviewer
             btnPrint.Visible = false;
             cbPeriod.Visible = true; lbPeriod.Visible = true;
             cbLevel.Visible = true; lbLevel.Visible = true;
+            cbHalfYear2.Visible = false; lbHalfYear2.Visible = false;
 
             cbTeacher.SelectedIndex = -1;
 
@@ -1712,10 +1826,13 @@ namespace DBviewer
             tbLevelEducation.Visible = true; lbLevelEducation.Visible = true;
             lbIntelHours.Visible = false; lbEnterIntel.Visible = true;
             btnPrint.Visible = false; btnDelete.Visible = true;
+            cbHalfYear2.Visible = false; lbHalfYear2.Visible = false;
+            cbHalfYear.Visible = true; lbHalfYear.Visible = true;
 
             isInput = true;
             tbHours.Text = "";
             cbTeacher.SelectedIndex = -1;
+            cbHalfYear.SelectedIndex = 0;
             SetYearAndMonth();
             DaysInMonth();
             LoadTableReports();
@@ -1735,6 +1852,8 @@ namespace DBviewer
             tbLevelEducation.Visible = false; lbLevelEducation.Visible = false;
             lbIntelHours.Visible = true; lbEnterIntel.Visible = false;
             btnPrint.Visible = true; btnDelete.Visible = false;
+            cbHalfYear2.Visible = true; lbHalfYear2.Visible = true;
+            cbHalfYear.Visible = false; lbHalfYear.Visible = false;
 
             cbTeacher.SelectedIndex = -1;
 
@@ -1781,9 +1900,9 @@ namespace DBviewer
                     using (connection = new SQLiteConnection(connectionString))
                     {
                         connection.Open();
-                        CMD = new SQLiteCommand("INSERT INTO Reports (DisName, GroupName, " + GetFieldName() +
+                        CMD = new SQLiteCommand("INSERT INTO Reports (DisName, GroupName, HalfYear, " + GetFieldName() +
                                     ", TotalHours, Date, IaGakGek) VALUES ('" + cbDiscipline.Text + "', '" +
-                                    cbStudiesGroup.Text + "', " + hours + ", " + hours +
+                                    cbStudiesGroup.Text + "', " + (cbHalfYear.SelectedIndex + 1) + ", " + hours + ", " + hours +
                                     ", '" + GetStringWith0(cbDay.SelectedIndex + 1) + "." + GetStringWith0(cbMonth.SelectedIndex + 1) + "." + cbYear.Text +
                                     "', '" + GetStringWith0(cbMonth.SelectedIndex + 1) + cbYear.Text + cbTeacher.Text + tbLevelEducation.Text +
                                     "')", connection);
@@ -1948,8 +2067,6 @@ namespace DBviewer
             }
         }
 
-        // Проверка 
-
         // Обработка изменения преподавателя
         private void cbTeacher_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -2024,6 +2141,27 @@ namespace DBviewer
         private void cbLevel_SelectedIndexChanged(object sender, EventArgs e)
         {
             FillGeneralTable();
+        }
+
+        private void dgvTable_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (!lbGeneralIntel.Visible || e.ColumnIndex != 1) return;
+            string fio = dgvTable[1, e.RowIndex].Value.ToString();
+            PrepareDetailInfoTable(fio);
+            if (!(form2 is null)) form2.Close();
+            form2 = new Form2(fio, detailInfoTable);
+            form2.Show();
+        }
+
+        private void cbHalfYear_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            tbHours.Text = "";
+            lbHours.Text = "Часы (доступно: " + (GetHoursPlan() - GetCompleteHours()) + ")";
+        }
+
+        private void cbHalfYear2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            LoadTableReportsWithArguments();
         }
     }
 }

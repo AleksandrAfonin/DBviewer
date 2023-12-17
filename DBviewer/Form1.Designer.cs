@@ -77,6 +77,10 @@ namespace DBviewer
             this.pictureBox = new System.Windows.Forms.PictureBox();
             this.lbPeriod = new System.Windows.Forms.Label();
             this.lbLevel = new System.Windows.Forms.Label();
+            this.cbHalfYear = new System.Windows.Forms.ComboBox();
+            this.lbHalfYear = new System.Windows.Forms.Label();
+            this.cbHalfYear2 = new System.Windows.Forms.ComboBox();
+            this.lbHalfYear2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTable)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.SuspendLayout();
@@ -92,6 +96,7 @@ namespace DBviewer
             this.dgvTable.ReadOnly = true;
             this.dgvTable.Size = new System.Drawing.Size(976, 407);
             this.dgvTable.TabIndex = 0;
+            this.dgvTable.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvTable_CellDoubleClick);
             // 
             // lbTeacher
             // 
@@ -106,7 +111,7 @@ namespace DBviewer
             // lbDiscipline
             // 
             this.lbDiscipline.AutoSize = true;
-            this.lbDiscipline.Location = new System.Drawing.Point(586, 4);
+            this.lbDiscipline.Location = new System.Drawing.Point(586, 2);
             this.lbDiscipline.Name = "lbDiscipline";
             this.lbDiscipline.Size = new System.Drawing.Size(70, 13);
             this.lbDiscipline.TabIndex = 2;
@@ -116,7 +121,7 @@ namespace DBviewer
             // lbStudiesGroup
             // 
             this.lbStudiesGroup.AutoSize = true;
-            this.lbStudiesGroup.Location = new System.Drawing.Point(586, 43);
+            this.lbStudiesGroup.Location = new System.Drawing.Point(586, 39);
             this.lbStudiesGroup.Name = "lbStudiesGroup";
             this.lbStudiesGroup.Size = new System.Drawing.Size(87, 13);
             this.lbStudiesGroup.TabIndex = 3;
@@ -126,7 +131,7 @@ namespace DBviewer
             // lbTypeOfActivity
             // 
             this.lbTypeOfActivity.AutoSize = true;
-            this.lbTypeOfActivity.Location = new System.Drawing.Point(731, 43);
+            this.lbTypeOfActivity.Location = new System.Drawing.Point(731, 39);
             this.lbTypeOfActivity.Name = "lbTypeOfActivity";
             this.lbTypeOfActivity.Size = new System.Drawing.Size(70, 13);
             this.lbTypeOfActivity.TabIndex = 4;
@@ -148,7 +153,7 @@ namespace DBviewer
             // 
             this.cbDiscipline.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbDiscipline.FormattingEnabled = true;
-            this.cbDiscipline.Location = new System.Drawing.Point(589, 20);
+            this.cbDiscipline.Location = new System.Drawing.Point(589, 17);
             this.cbDiscipline.Name = "cbDiscipline";
             this.cbDiscipline.Size = new System.Drawing.Size(399, 21);
             this.cbDiscipline.TabIndex = 6;
@@ -159,7 +164,7 @@ namespace DBviewer
             // 
             this.cbStudiesGroup.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbStudiesGroup.FormattingEnabled = true;
-            this.cbStudiesGroup.Location = new System.Drawing.Point(589, 59);
+            this.cbStudiesGroup.Location = new System.Drawing.Point(589, 53);
             this.cbStudiesGroup.Name = "cbStudiesGroup";
             this.cbStudiesGroup.Size = new System.Drawing.Size(139, 21);
             this.cbStudiesGroup.TabIndex = 7;
@@ -170,7 +175,7 @@ namespace DBviewer
             // 
             this.cbTypeOfActivity.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbTypeOfActivity.FormattingEnabled = true;
-            this.cbTypeOfActivity.Location = new System.Drawing.Point(734, 59);
+            this.cbTypeOfActivity.Location = new System.Drawing.Point(734, 53);
             this.cbTypeOfActivity.Name = "cbTypeOfActivity";
             this.cbTypeOfActivity.Size = new System.Drawing.Size(144, 21);
             this.cbTypeOfActivity.TabIndex = 8;
@@ -302,7 +307,7 @@ namespace DBviewer
             // lbLevelEducation
             // 
             this.lbLevelEducation.AutoSize = true;
-            this.lbLevelEducation.Location = new System.Drawing.Point(359, 72);
+            this.lbLevelEducation.Location = new System.Drawing.Point(586, 75);
             this.lbLevelEducation.Name = "lbLevelEducation";
             this.lbLevelEducation.Size = new System.Drawing.Size(51, 13);
             this.lbLevelEducation.TabIndex = 20;
@@ -372,9 +377,9 @@ namespace DBviewer
             // 
             // btnViewAll
             // 
-            this.btnViewAll.Location = new System.Drawing.Point(589, 86);
+            this.btnViewAll.Location = new System.Drawing.Point(685, 86);
             this.btnViewAll.Name = "btnViewAll";
-            this.btnViewAll.Size = new System.Drawing.Size(139, 23);
+            this.btnViewAll.Size = new System.Drawing.Size(98, 23);
             this.btnViewAll.TabIndex = 29;
             this.btnViewAll.Text = "Показать всех";
             this.btnViewAll.UseVisualStyleBackColor = true;
@@ -415,9 +420,9 @@ namespace DBviewer
             // 
             // btnPrint
             // 
-            this.btnPrint.Location = new System.Drawing.Point(734, 86);
+            this.btnPrint.Location = new System.Drawing.Point(788, 86);
             this.btnPrint.Name = "btnPrint";
-            this.btnPrint.Size = new System.Drawing.Size(144, 23);
+            this.btnPrint.Size = new System.Drawing.Size(91, 23);
             this.btnPrint.TabIndex = 33;
             this.btnPrint.Text = "Печать";
             this.btnPrint.UseVisualStyleBackColor = true;
@@ -504,7 +509,7 @@ namespace DBviewer
             // 
             // tbLevelEducation
             // 
-            this.tbLevelEducation.Location = new System.Drawing.Point(362, 89);
+            this.tbLevelEducation.Location = new System.Drawing.Point(589, 88);
             this.tbLevelEducation.Name = "tbLevelEducation";
             this.tbLevelEducation.ReadOnly = true;
             this.tbLevelEducation.Size = new System.Drawing.Size(60, 20);
@@ -517,9 +522,9 @@ namespace DBviewer
             // 
             // btnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(588, 87);
+            this.btnDelete.Location = new System.Drawing.Point(655, 87);
             this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(291, 23);
+            this.btnDelete.Size = new System.Drawing.Size(225, 23);
             this.btnDelete.TabIndex = 43;
             this.btnDelete.Text = "Удалить выделенные строки";
             this.btnDelete.UseVisualStyleBackColor = true;
@@ -577,17 +582,69 @@ namespace DBviewer
             // lbLevel
             // 
             this.lbLevel.AutoSize = true;
-            this.lbLevel.Location = new System.Drawing.Point(309, 72);
+            this.lbLevel.Location = new System.Drawing.Point(305, 72);
             this.lbLevel.Name = "lbLevel";
             this.lbLevel.Size = new System.Drawing.Size(120, 13);
             this.lbLevel.TabIndex = 47;
             this.lbLevel.Text = "Уровень образования";
+            // 
+            // cbHalfYear
+            // 
+            this.cbHalfYear.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbHalfYear.FormattingEnabled = true;
+            this.cbHalfYear.Items.AddRange(new object[] {
+            "Первое",
+            "Второе"});
+            this.cbHalfYear.Location = new System.Drawing.Point(361, 88);
+            this.cbHalfYear.Name = "cbHalfYear";
+            this.cbHalfYear.Size = new System.Drawing.Size(62, 21);
+            this.cbHalfYear.TabIndex = 48;
+            this.cbHalfYear.Visible = false;
+            this.cbHalfYear.SelectedIndexChanged += new System.EventHandler(this.cbHalfYear_SelectedIndexChanged);
+            // 
+            // lbHalfYear
+            // 
+            this.lbHalfYear.AutoSize = true;
+            this.lbHalfYear.Location = new System.Drawing.Point(358, 72);
+            this.lbHalfYear.Name = "lbHalfYear";
+            this.lbHalfYear.Size = new System.Drawing.Size(61, 13);
+            this.lbHalfYear.TabIndex = 49;
+            this.lbHalfYear.Text = "Полугодие";
+            this.lbHalfYear.Visible = false;
+            // 
+            // cbHalfYear2
+            // 
+            this.cbHalfYear2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbHalfYear2.FormattingEnabled = true;
+            this.cbHalfYear2.Items.AddRange(new object[] {
+            "Первое",
+            "Второе"});
+            this.cbHalfYear2.Location = new System.Drawing.Point(589, 88);
+            this.cbHalfYear2.Name = "cbHalfYear2";
+            this.cbHalfYear2.Size = new System.Drawing.Size(91, 21);
+            this.cbHalfYear2.TabIndex = 50;
+            this.cbHalfYear2.Visible = false;
+            this.cbHalfYear2.SelectedIndexChanged += new System.EventHandler(this.cbHalfYear2_SelectedIndexChanged);
+            // 
+            // lbHalfYear2
+            // 
+            this.lbHalfYear2.AutoSize = true;
+            this.lbHalfYear2.Location = new System.Drawing.Point(586, 72);
+            this.lbHalfYear2.Name = "lbHalfYear2";
+            this.lbHalfYear2.Size = new System.Drawing.Size(61, 13);
+            this.lbHalfYear2.TabIndex = 51;
+            this.lbHalfYear2.Text = "Полугодие";
+            this.lbHalfYear2.Visible = false;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1002, 534);
+            this.Controls.Add(this.lbHalfYear2);
+            this.Controls.Add(this.cbHalfYear2);
+            this.Controls.Add(this.lbHalfYear);
+            this.Controls.Add(this.cbHalfYear);
             this.Controls.Add(this.lbLevel);
             this.Controls.Add(this.lbPeriod);
             this.Controls.Add(this.cbLevel);
@@ -695,6 +752,10 @@ namespace DBviewer
         private System.Windows.Forms.ComboBox cbLevel;
         private System.Windows.Forms.Label lbPeriod;
         private System.Windows.Forms.Label lbLevel;
+        private System.Windows.Forms.ComboBox cbHalfYear;
+        private System.Windows.Forms.Label lbHalfYear;
+        private System.Windows.Forms.ComboBox cbHalfYear2;
+        private System.Windows.Forms.Label lbHalfYear2;
     }
 }
 
