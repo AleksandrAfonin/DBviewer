@@ -259,19 +259,19 @@ namespace DBviewer
             {
                 case "АСОИУ": pictureBox.Image = Properties.Resources.asoiu;
                     break;
-                case "espp":
+                case "ЭПП":
                     pictureBox.Image = Properties.Resources.espp;
                     break;
-                case "tm":
+                case "ТМ":
                     pictureBox.Image = Properties.Resources.tm;
                     break;
-                case "ttp":
+                case "ТТП":
                     pictureBox.Image = Properties.Resources.ttp;
                     break;
                 case "end":
                     pictureBox.Image = Properties.Resources.end;
                     break;
-                case "egn":
+                case "ЭиГН":
                     pictureBox.Image = Properties.Resources.egn;
                     break;
                 case "iygn":
@@ -1937,7 +1937,7 @@ namespace DBviewer
                 {
                     connection.Open();
                     CMD = new SQLiteCommand("SELECT Id, FIO AS Преподаватель, FullFIO AS 'Полное ФИО', HErate AS 'Ставка ВО', SPErate AS 'Ставка СПО'" +
-                        " FROM Teachers WHERE FIO LIKE '%очасов%'", connection);
+                        " FROM Teachers WHERE FIO LIKE '%очасов%' ORDER BY Преподаватель", connection);
                     adapter = new SQLiteDataAdapter(CMD);
                     DataTable table = new DataTable();
                     adapter.Fill(table);
@@ -1995,7 +1995,8 @@ namespace DBviewer
             btnAdditionalInfo.Visible = true; btnIntel.Visible = true;
             lbAdditionalInfo.Visible = false; lbGeneralIntel.Visible = true;
 
-            dgvTable.DataSource = generalTable; dgvTable.ReadOnly = true;
+            PlacedGeneralTable();
+            dgvTable.ReadOnly = true;
         }
 
         // Обработка печати
