@@ -1,24 +1,20 @@
 ﻿using Spire.Xls;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
-using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DBviewer
 {
     public partial class Form1 : Form
     {
-        private static string dataBase = "27231685c0687995.db";
-        private static string connectionString = "Data Source=" + dataBase + "; Version=3; FailIfMissing=True";
-        private string templete = "template.xlsx";
+        private static string dataBase;
+        private static string connectionString;
+        private string template = "template.xlsx";
         private string psw = "admin";
 
         SQLiteConnection connection;
@@ -1001,8 +997,6 @@ namespace DBviewer
                     connection.Open();
                     foreach (DataGridViewRow dataRow in dgvTable.SelectedRows)
                     {
-                        Console.WriteLine("Строка: " + dataRow.Cells["Id"].Value);
-
                         CMD = new SQLiteCommand("DELETE FROM Reports WHERE Id = " + dataRow.Cells["Id"].Value + " AND PaymentMark IS NULL", connection);
                         CMD.ExecuteNonQuery();
                     }
@@ -1379,10 +1373,8 @@ namespace DBviewer
                 if (month == 7 || month == 8) month = 6;
             }
 
-            //indexMonth = month - 1;
             cbMonth.SelectedIndex = month - 1;
             cbYear.SelectedItem = year.ToString();
-            //indexYear = cbYear.SelectedIndex;
         }
 
         // Заполнение элементов Combo Box Discipline *
@@ -1640,7 +1632,7 @@ namespace DBviewer
             {
                 using (Workbook workbook = new Workbook())
                 {
-                    workbook.LoadFromFile(templete);
+                    workbook.LoadFromFile(template);
                     Worksheet worksheet1 = workbook.Worksheets[0];
 
                     worksheet1.Range[4, 1].Value = str4;
@@ -1950,7 +1942,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось получить ФИО преподавателей");
+                MessageBox.Show("Не удалось получить данные из таблицы Teachers");
             }
         }
 
@@ -1988,7 +1980,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не удалось внести данные.");
+                MessageBox.Show("Не удалось сохранить данные.");
             }
 
             btnSaveAdditionalInfo.Visible = false; btnBackAdditionalInfo.Visible = false;
@@ -2022,7 +2014,7 @@ namespace DBviewer
 
             using (Workbook workbook = new Workbook())
             {
-                workbook.LoadFromFile(templete);
+                workbook.LoadFromFile(template);
                 workbook.PrintDocument.Print();
             }
 
@@ -2131,7 +2123,8 @@ namespace DBviewer
         {
             if (dgvTable.SelectedRows.Count == 0) return;
             DeleteFromReports();
-            LoadTableReportsWithArguments();
+            LoadTableReports();
+            lbHours.Text = "Часы (доступно: " + (GetHoursPlan() - GetCompleteHours()) + ")";
         }
 
         private void cbPeriod_SelectedIndexChanged(object sender, EventArgs e)
