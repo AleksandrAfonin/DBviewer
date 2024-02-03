@@ -103,7 +103,7 @@ namespace DBviewer
             }
             catch (SQLiteException)
             {
-                MessageBox.Show("Не то !");
+                MessageBox.Show("Файл базы данных не соответствует требуемому !");
                 Environment.Exit(0);
             }
         }
@@ -1986,6 +1986,8 @@ namespace DBviewer
             btnSaveAdditionalInfo.Visible = false; btnBackAdditionalInfo.Visible = false;
             btnAdditionalInfo.Visible = true; btnIntel.Visible = true;
             lbAdditionalInfo.Visible = false; lbGeneralIntel.Visible = true;
+            cbPeriod.Visible = true; lbPeriod.Visible = true;
+            cbLevel.Visible = true; lbLevel.Visible = true;
 
             PlacedGeneralTable();
             dgvTable.ReadOnly = true;
